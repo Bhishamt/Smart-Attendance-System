@@ -21,10 +21,10 @@
 **Smart Attendance System** is a professional, mobile-first platform designed to digitize and automate the traditional attendance-taking process. 
 
 ### 🛑 Problem Statement
-Traditional paper-based attendance systems are time-consuming, prone to human error, and lack real-time visibility. Teachers spend valuable instructional time taking roll calls, while administrators struggle to identify chronic absenteeism or generate comprehensive compliance reports quickly.
+Traditional paper-based attendance systems are time-consuming, prone to human error, and lack real-time visibility. Teachers spend valuable instructional time taking roll calls, while administrators s[...]
 
 ### 💡 Why This Project Was Built
-This project was built to showcase how modern web technologies (like React, TypeScript, and Node.js) combined with AI engines can solve real-world operational bottlenecks in education. It serves as a comprehensive portfolio piece demonstrating full-stack architecture, clean UI/UX design, and scalable data management.
+This project was built to showcase how modern web technologies (like React, TypeScript, and Node.js) combined with AI engines can solve real-world operational bottlenecks in education. It serves as a [...]
 
 ### 🎯 Main Objectives
 - **Speed & Efficiency**: Reduce the time spent marking attendance to seconds.
@@ -71,17 +71,17 @@ The system offers tailored experiences based on user roles, ensuring everyone ha
 
 | **Dashboard** | **Student List** |
 |:---:|:---:|
-| <img src="assets/screenshots/Screenshot%202026-07-06%20092144.png" width="100%" alt="Admin Dashboard"> | <img src="assets/screenshots/Screenshot%202026-07-06%20092157.png" width="100%" alt="Student List"> |
+| <img src="assets/screenshots/Screenshot%202026-07-06%20092144.png" width="100%" alt="Admin Dashboard"> | <img src="assets/screenshots/Screenshot%202026-07-06%20092157.png" width="100%" alt="Student [...]
 | *Real-time metrics and overall attendance snapshot* | *Manage students across different classes and semesters* |
 
 | **Attendance** | **Face Recognition & Onboarding** |
 |:---:|:---:|
-| <img src="assets/screenshots/Screenshot%202026-07-06%20092239.png" width="100%" alt="Mark Attendance"> | <img src="assets/screenshots/Screenshot%202026-07-06%20092425.png" width="100%" alt="Smart Onboarding"> |
+| <img src="assets/screenshots/Screenshot%202026-07-06%20092239.png" width="100%" alt="Mark Attendance"> | <img src="assets/screenshots/Screenshot%202026-07-06%20092425.png" width="100%" alt="Smart On[...]
 | *Rapid UI for marking student presence* | *Intelligent onboarding and authentication flows* |
 
 | **Student Profile** | **Analytics** |
 |:---:|:---:|
-| <img src="assets/screenshots/Screenshot%202026-07-06%20092211.png" width="100%" alt="Student Profile"> | <img src="assets/screenshots/Screenshot%202026-07-06%20092257.png" width="100%" alt="Analytics"> |
+| <img src="assets/screenshots/Screenshot%202026-07-06%20092211.png" width="100%" alt="Student Profile"> | <img src="assets/screenshots/Screenshot%202026-07-06%20092257.png" width="100%" alt="Analytic[...]
 | *Detailed individual attendance history and stats* | *Deep insights, consistency metrics, and trends* |
 
 </div>
@@ -144,6 +144,13 @@ graph TD
    npm install
    npm run dev
    ```
+
+---
+
+## 📞 Contact
+
+**Main Account:** [Bhishamt](https://github.com/Bhishamt)  
+**Secondary Account:** [Chandrachant (KING000T)](https://github.com/KING000T)
 
 ---
 
