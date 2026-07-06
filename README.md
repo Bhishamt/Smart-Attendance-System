@@ -150,7 +150,7 @@ graph TD
 ## 📞 Contact
 
 **Main Account:** [Bhishamt](https://github.com/Bhishamt)  
-**Secondary Account:** [Chandrachant (KING000T)](https://github.com/KING000T)
+**Secondary Account:** [(KING000T)](https://github.com/KING000T)
 
 ---
 
