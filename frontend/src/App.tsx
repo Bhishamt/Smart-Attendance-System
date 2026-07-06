@@ -204,7 +204,7 @@ export default function App() {
           setToastMessage(`Welcome back, ${user.role}! Loaded institute workspace.`);
           setActiveTab("dashboard");
         }}
-        onGoogleAuth={async () => {
+        onCloudAuth={async () => {
           try {
             const res = await fetch("/api/auth/cloud/url");
             const data = await res.json();

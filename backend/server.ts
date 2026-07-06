@@ -556,8 +556,8 @@ app.post("/api/students/:id/approve", (req, res) => {
 // ==========================================
 
 const getOAuth2Client = () => {
-  const clientId = process.env.OAUTH_CLIENT_ID || process.env.GOOGLE_CLIENT_ID || "DEMO_CLIENT_ID_KEY";
-  const clientSecret = process.env.OAUTH_CLIENT_SECRET || process.env.GOOGLE_CLIENT_SECRET || "DEMO_CLIENT_SECRET_KEY";
+  const clientId = process.env.OAUTH_CLIENT_ID || process.env.CLOUD_CLIENT_ID || "DEMO_CLIENT_ID_KEY";
+  const clientSecret = process.env.OAUTH_CLIENT_SECRET || process.env.CLOUD_CLIENT_SECRET || "DEMO_CLIENT_SECRET_KEY";
   const redirectUri = `${process.env.APP_URL || "http://localhost:3000"}/api/auth/cloud/callback`;
   
   return new google.auth.OAuth2(clientId, clientSecret, redirectUri);
@@ -807,7 +807,7 @@ app.post("/api/ai/analyze", async (req, res) => {
   const targetClass = classesData.find(c => c.id === classId)?.name || "Computer Science - 3B";
   const classStudents = studentsData.filter(s => !classId || s.classId === classId || classId === "all");
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.AI_API_KEY;
   if (!apiKey) {
     // Return high quality intelligent summary if key is not configured yet
     return res.json({

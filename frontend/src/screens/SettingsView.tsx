@@ -205,7 +205,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               >
                 <img
                   src="https://ui-avatars.com/api/?name=User&background=random"
-                  alt="Google"
+                  alt="Cloud"
                   className="w-4 h-4 object-contain"
                 />
                 <span>Connect Cloud Storage</span>

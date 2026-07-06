@@ -18,5 +18,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced "Smart AI Assistant" for intelligent attendance insights.
 
 ### Removed
-- All AI generated template remnants.
+- All outdated template remnants.
 - Experimental flags and labels.

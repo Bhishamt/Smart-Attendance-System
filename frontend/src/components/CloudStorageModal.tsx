@@ -150,7 +150,7 @@ export const CloudStorageModal: React.FC<CloudStorageModalProps> = ({
                 ) : (
                   <img
                     src="https://ui-avatars.com/api/?name=User&background=random"
-                    alt="Google"
+                    alt="Cloud"
                     className="w-5 h-5 object-contain"
                   />
                 )}
@@ -199,7 +199,7 @@ export const CloudStorageModal: React.FC<CloudStorageModalProps> = ({
             >
               <img
                 src="https://ui-avatars.com/api/?name=User&background=random"
-                alt="Google"
+                alt="Cloud"
                 className="w-4 h-4 object-contain"
               />
               <span>Link Cloud Storage Account</span>

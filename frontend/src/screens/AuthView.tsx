@@ -8,10 +8,10 @@ import { GraduationCap, Mail, Lock, Eye, EyeOff, ArrowRight, User, Shield, Build
 
 interface AuthViewProps {
   onLoginSuccess: (user: any) => void;
-  onGoogleAuth: () => void;
+  onCloudAuth: () => void;
 }
 
-export const AuthView: React.FC<AuthViewProps> = ({ onLoginSuccess, onGoogleAuth }) => {
+export const AuthView: React.FC<AuthViewProps> = ({ onLoginSuccess, onCloudAuth }) => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("woorkcollage@gmail.com");
   const [password, setPassword] = useState("password123");
@@ -209,14 +209,14 @@ export const AuthView: React.FC<AuthViewProps> = ({ onLoginSuccess, onGoogleAuth
         {/* Social Icons */}
         <div className="grid grid-cols-3 gap-3 mb-6">
           <button
-            onClick={onGoogleAuth}
+            onClick={onCloudAuth}
             type="button"
             className="h-12 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm"
             title="Continue with Cloud Workspace / Drive"
           >
             <img
               src="https://ui-avatars.com/api/?name=User&background=random"
-              alt="Google"
+              alt="Cloud"
               className="w-6 h-6 object-contain"
             />
           </button>
