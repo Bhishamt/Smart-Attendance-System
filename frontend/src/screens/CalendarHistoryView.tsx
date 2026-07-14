@@ -170,7 +170,7 @@ export const CalendarHistoryView: React.FC<CalendarHistoryViewProps> = ({
             <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mt-0.5">Present</span>
           </div>
           <div className="bg-red-50/70 dark:bg-red-950/40 rounded-2xl p-3.5 flex flex-col items-center border border-red-100 dark:border-red-900/50">
-            <span className="text-xl font-extrabold text-red-600 dark:text-red-400">0{absentCount}</span>
+            <span className="text-xl font-extrabold text-red-600 dark:text-red-400">{absentCount < 10 ? `0${absentCount}` : absentCount}</span>
             <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mt-0.5">Absent</span>
           </div>
         </div>

@@ -35,10 +35,11 @@ export const MarkAttendanceView: React.FC<MarkAttendanceViewProps> = ({
 }) => {
   const [selectedClass, setSelectedClass] = useState("cs-3b");
   const selectedClassObj = classes.find(c => c.id === selectedClass) || classes[0];
-  const [selectedSubject, setSelectedSubject] = useState(selectedClassObj?.subjects?.[0] || "Data Structures & Algorithms");
+  const defaultSubject = selectedClassObj?.subjects?.[0] || "Data Structures & Algorithms";
+  const [selectedSubject, setSelectedSubject] = useState(defaultSubject);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDate, setSelectedDate] = useState(24); // May 24, 2025
-  const [attendanceState, setAttendanceState] = useState<{ [id: string]: "Present" | "Absent" | "Late" }>({});
+  const [attendanceState, setAttendanceState] = useState<{ [id: string]: "Present" | "Absent" | "Late" | "Medical" }>({});
   const [isSaving, setIsSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
 
@@ -101,19 +102,19 @@ export const MarkAttendanceView: React.FC<MarkAttendanceViewProps> = ({
     return matchesClass && matchesSearch;
   });
 
-  // Initialize state from student status
+  // Initialize state from student status for the filtered (visible) students only
   useEffect(() => {
-    const initialState: { [id: string]: "Present" | "Absent" | "Late" } = {};
-    students.forEach((s) => {
+    const initialState: { [id: string]: "Present" | "Absent" | "Late" | "Medical" } = {};
+    filteredStudents.forEach((s) => {
       initialState[s.id] = s.status === "Medical" ? "Absent" : s.status;
     });
-    setAttendanceState(initialState);
-  }, [students, selectedClass]);
+    setAttendanceState((prev) => ({ ...prev, ...initialState }));
+  }, [students, selectedClass, searchQuery]);
 
   const toggleStatus = (id: string) => {
     setAttendanceState((prev) => {
       const current = prev[id] || "Present";
-      let next: "Present" | "Absent" | "Late" = "Present";
+      let next: "Present" | "Absent" | "Late" | "Medical" = "Present";
       if (current === "Present") next = "Absent";
       else if (current === "Absent") next = "Late";
       else next = "Present";
