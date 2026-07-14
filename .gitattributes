@@ -1,0 +1,33 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# TypeScript
+*.ts text eol=lf
+*.tsx text eol=lf
+
+# JSON
+*.json text eol=lf
+
+# Markdown
+*.md text eol=lf diff=markdown
+
+# YAML
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Shell scripts
+*.sh text eol=lf
+
+# PowerShell scripts
+*.ps1 text eol=lf
+
+# Batch scripts
+*.bat text eol=crlf
+
+# Images
+*.png binary
+*.jpg binary
+*.svg text
+
+# Lock files
+package-lock.json -diff
