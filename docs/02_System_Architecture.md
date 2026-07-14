@@ -1,0 +1,65 @@
+# System Architecture
+
+## High-Level Architecture
+
+The Smart Attendance Management System follows a **monorepo** structure with a **React frontend** and **Express backend**.
+
+```
+┌──────────────────────────────────────────────┐
+│                   Browser                      │
+└──────────────────┬───────────────────────────┘
+                   │ HTTP/WebSocket
+┌──────────────────▼───────────────────────────┐
+│          Vite Dev Server (Port 5173)           │
+│         (Proxy API requests to backend)        │
+└──────────────────┬───────────────────────────┘
+                   │
+┌──────────────────▼───────────────────────────┐
+│        Express API Server (Port 3000)          │
+│  ┌─────────────┐  ┌──────────────────────┐   │
+│  │ REST Routes  │  │ AI Integration Layer │   │
+│  ├─────────────┤  ├──────────────────────┤   │
+│  │ /api/students│  │ Google Gemini API    │   │
+│  │ /api/attendance│ │ Simulated Fallback   │   │
+│  │ /api/staff   │  └──────────────────────┘   │
+│  │ /api/dashboard│                             │
+│  │ /api/ai      │  ┌──────────────────────┐   │
+│  │ /api/auth    │  │ Cloud Storage Layer  │   │
+│  │ /api/sync    │  ├──────────────────────┤   │
+│  └─────────────┘  │ Google Drive OAuth    │   │
+│                    └──────────────────────┘   │
+├──────────────────────────────────────────────┤
+│           In-Memory Data Store                 │
+│  Students | Staff | Classes | Attendance       │
+└──────────────────────────────────────────────┘
+```
+
+## Frontend Architecture
+
+```
+┌───────────────────────────────────────────────┐
+│                  App.tsx                        │
+│  (State Management, Routing, Modal Control)    │
+├───────────────────────────────────────────────┤
+│  ┌─────────┐ ┌──────────┐ ┌────────────────┐  │
+│  │ Navbar  │ │ Sidebar  │ │  BottomNav      │  │
+│  └─────────┘ └──────────┘ └────────────────┘  │
+├───────────────────────────────────────────────┤
+│  ┌───────────┐ ┌───────────┐ ┌──────────────┐ │
+│  │ Dashboard │ │MarkAttend │ │ Students      │ │
+│  ├───────────┤ ├───────────┤ ├──────────────┤ │
+│  │Analytics  │ │ Calendar  │ │ Settings      │ │
+│  ├───────────┤ ├───────────┤ ├──────────────┤ │
+│  │ Auth      │ │ Splash    │ │ StudentProfile│ │
+│  └───────────┘ └───────────┘ └──────────────┘ │
+└───────────────────────────────────────────────┘
+```
+
+## Data Flow
+
+1. User interacts with React UI
+2. API calls are made to Express backend via fetch
+3. Backend processes requests against in-memory store
+4. AI analysis requests are forwarded to Google Gemini (or simulated fallback)
+5. Cloud storage operations use Google Drive OAuth flow
+6. Response flows back to update UI state
