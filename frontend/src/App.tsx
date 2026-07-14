@@ -110,9 +110,12 @@ export default function App() {
         });
         setToastMessage(`🎉 Attendance saved for ${records.length} students!`);
         fetchData();
+      } else {
+        setToastMessage("⚠️ Failed to save attendance. Please try again.");
       }
     } catch (e) {
       console.error("Error saving attendance:", e);
+      setToastMessage("⚠️ Network error while saving attendance.");
     }
   };
 
@@ -129,9 +132,12 @@ export default function App() {
         setToastMessage(`✅ Registered student: ${newStudent.name}`);
         confetti({ particleCount: 50, spread: 50, origin: { y: 0.5 } });
         fetchData();
+      } else {
+        setToastMessage("⚠️ Failed to add student. Please try again.");
       }
     } catch (e) {
       console.error("Error adding student:", e);
+      setToastMessage("⚠️ Network error while adding student.");
     }
   };
 
