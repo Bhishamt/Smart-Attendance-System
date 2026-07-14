@@ -4,7 +4,7 @@
  */
 
 import React from "react";
-import { Home, Users, CalendarCheck, BarChart2, Settings as SettingsIcon, Plus } from "lucide-react";
+import { Home, Users, BarChart2, Settings as SettingsIcon, Plus } from "lucide-react";
 import { ActiveTab } from "../types";
 
 interface BottomNavProps {

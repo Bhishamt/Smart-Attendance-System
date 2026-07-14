@@ -14,9 +14,7 @@ import {
   XCircle,
   Clock,
   ArrowRight,
-  Sparkles,
   Save,
-  Award,
 } from "lucide-react";
 import { Student } from "../types";
 

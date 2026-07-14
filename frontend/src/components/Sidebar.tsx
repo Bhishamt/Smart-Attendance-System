@@ -8,7 +8,6 @@ import {
   LayoutDashboard,
   Users,
   CalendarCheck,
-  FileText,
   Calendar,
   BarChart3,
   Settings as SettingsIcon,

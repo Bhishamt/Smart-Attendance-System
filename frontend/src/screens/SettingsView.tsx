@@ -20,8 +20,6 @@ import {
   Download,
   Upload,
   CheckCircle,
-  AlertCircle,
-  ExternalLink,
   Users,
   Plus
 } from "lucide-react";

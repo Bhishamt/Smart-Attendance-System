@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from "react";
-import { X, Upload, User, Mail, Phone, School, Award, Save, Sparkles, Camera, CheckCircle2, ScanFace, Plus } from "lucide-react";
+import { X, User, Mail, Phone, School, Save, Camera, CheckCircle2, ScanFace, Plus } from "lucide-react";
 import { ClassInfo } from "../types";
 
 interface AddStudentModalProps {

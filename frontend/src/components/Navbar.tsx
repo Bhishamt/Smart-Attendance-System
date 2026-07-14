@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from "react";
-import { GraduationCap, Bell, Sparkles, Cloud, CloudCheck, Menu, LogOut, Settings as SettingsIcon } from "lucide-react";
+import { GraduationCap, Bell, Sparkles, Cloud, CloudCheck, LogOut, Settings as SettingsIcon } from "lucide-react";
 import { ActiveTab, SettingsState } from "../types";
 
 interface NavbarProps {

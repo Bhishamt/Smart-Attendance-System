@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from "react";
-import { GraduationCap, Mail, Lock, Eye, EyeOff, ArrowRight, User, Shield, Building } from "lucide-react";
+import { GraduationCap, Mail, Lock, Eye, EyeOff, ArrowRight, User } from "lucide-react";
 
 interface AuthViewProps {
   onLoginSuccess: (user: any) => void;

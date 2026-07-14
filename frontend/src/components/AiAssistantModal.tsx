@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from "react";
-import { Sparkles, X, BrainCircuit, AlertTriangle, CheckCircle2, RefreshCw, Send, ArrowRight } from "lucide-react";
+import { Sparkles, X, AlertTriangle, CheckCircle2, Send } from "lucide-react";
 import { ClassInfo } from "../types";
 
 interface AiAssistantModalProps {

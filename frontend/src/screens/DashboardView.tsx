@@ -17,7 +17,6 @@ import {
   ChevronDown,
   Sparkles,
   ChevronRight,
-  ShieldCheck,
 } from "lucide-react";
 import {
   AreaChart,

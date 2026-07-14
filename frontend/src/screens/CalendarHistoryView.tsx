@@ -5,15 +5,10 @@
 
 import React, { useState } from "react";
 import {
-  Calendar as CalendarIcon,
-  Filter,
   ChevronDown,
   Check,
   X,
   Download,
-  FileText,
-  Clock,
-  Sparkles,
 } from "lucide-react";
 import { Student } from "../types";
 
