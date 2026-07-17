@@ -4,6 +4,7 @@
  */
 
 import React, { useState } from "react";
+import { showToast } from "../utils/toast";
 import {
   ArrowLeft,
   Bell,
@@ -74,7 +75,7 @@ export const StudentProfileView: React.FC<StudentProfileViewProps> = ({
         </button>
         <h2 className="text-lg font-bold text-slate-800 dark:text-white">Student Profile</h2>
         <button
-          onClick={() => alert("Notification sent to " + student.name)}
+          onClick={() => showToast("Notification sent to " + student.name)}
           className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-50 transition-colors shadow-sm"
         >
           <Bell className="w-5 h-5" />

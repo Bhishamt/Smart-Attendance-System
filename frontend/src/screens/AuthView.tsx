@@ -4,6 +4,7 @@
  */
 
 import React, { useState } from "react";
+import { showToast } from "../utils/toast";
 import { GraduationCap, Mail, Lock, Eye, EyeOff, ArrowRight, User } from "lucide-react";
 
 interface AuthViewProps {
@@ -156,7 +157,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onLoginSuccess, onCloudAuth 
             <div className="flex justify-between items-center mb-1.5 ml-1">
               <label className="text-xs font-bold text-slate-600 dark:text-slate-400">Password</label>
               {!isSignUp && (
-                <a href="#forgot" onClick={(e) => { e.preventDefault(); alert("Password reset link sent to admin@institute.edu!"); }} className="text-xs font-bold text-indigo-600 hover:underline">
+                <a href="#forgot" onClick={(e) => { e.preventDefault(); showToast("Password reset link sent to admin@institute.edu!"); }} className="text-xs font-bold text-indigo-600 hover:underline">
                   Forgot Password?
                 </a>
               )}

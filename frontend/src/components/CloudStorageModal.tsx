@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from "react";
+import { showToast } from "../utils/toast";
 import {
   X,
   Cloud,
@@ -63,7 +64,7 @@ export const CloudStorageModal: React.FC<CloudStorageModalProps> = ({
         window.location.href = data.url;
       }
     } catch (e) {
-      alert("Error connecting to Cloud Storage. Please check OAuth credentials.");
+      showToast("Error connecting to Cloud Storage. Please check OAuth credentials.");
     }
   };
 
@@ -89,10 +90,10 @@ export const CloudStorageModal: React.FC<CloudStorageModalProps> = ({
         setBackupSuccessMsg(data.message || "Backup uploaded to Cloud Storage!");
         fetchDriveFiles();
       } else {
-        alert(data.error || "Backup failed");
+        showToast(data.error || "Backup failed");
       }
     } catch (e) {
-      alert("Network error during backup.");
+      showToast("Network error during backup.");
     } finally {
       setIsBackingUp(false);
     }
@@ -104,9 +105,9 @@ export const CloudStorageModal: React.FC<CloudStorageModalProps> = ({
       try {
         const res = await fetch(`/api/drive/restore/${file.id}`, { method: "POST" });
         const data = await res.json();
-        alert(data.message || "Database restored successfully!");
+        showToast(data.message || "Database restored successfully!");
       } catch (e) {
-        alert("Failed to restore database from Drive.");
+        showToast("Failed to restore database from Drive.");
       } finally {
         setIsRestoringId(null);
       }

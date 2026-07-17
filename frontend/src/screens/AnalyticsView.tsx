@@ -4,6 +4,7 @@
  */
 
 import React, { useState } from "react";
+import { showToast } from "../utils/toast";
 import {
   ArrowLeft,
   Users,
@@ -51,7 +52,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ stats, onBack, onO
     }
     setExported(true);
     setTimeout(() => {
-      alert(`Exporting institute analytics as ${exportFormat} report.\nDownload started automatically!`);
+      showToast(`Exporting institute analytics as ${exportFormat} report.\nDownload started automatically!`);
       setExported(false);
     }, 800);
   };

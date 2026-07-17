@@ -11,6 +11,7 @@ import {
   Download,
 } from "lucide-react";
 import { Student } from "../types";
+import { showToast } from "../utils/toast";
 
 interface CalendarHistoryViewProps {
   selectedStudentId?: string | null;
@@ -88,7 +89,7 @@ export const CalendarHistoryView: React.FC<CalendarHistoryViewProps> = ({
 
   const handleExportPDF = () => {
     const fileName = `Attendance_Report_${student ? student.name.replace(/\s+/g, "_") : "May_2025"}.pdf`;
-    alert(`Generating high-resolution PDF report: ${fileName}\nReport downloaded successfully!`);
+    showToast(`Generating high-resolution PDF report: ${fileName}\nReport downloaded successfully!`);
   };
 
   return (

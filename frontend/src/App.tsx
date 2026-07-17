@@ -21,6 +21,7 @@ import { AddStudentModal } from "./components/AddStudentModal";
 import { AiAssistantModal } from "./components/AiAssistantModal";
 import { CloudStorageModal } from "./components/CloudStorageModal";
 import confetti from "canvas-confetti";
+import { setupToastListener } from "./utils/toast";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>("splash");
@@ -190,13 +191,17 @@ export default function App() {
     setActiveTab("profile");
   };
 
-  // Toast auto-hide
+  // Toast auto-hide + global toast listener
   useEffect(() => {
     if (toastMessage) {
       const timer = setTimeout(() => setToastMessage(null), 4000);
       return () => clearTimeout(timer);
     }
   }, [toastMessage]);
+
+  useEffect(() => {
+    return setupToastListener(setToastMessage);
+  }, []);
 
   if (activeTab === "splash") {
     return <SplashView onEnter={() => setActiveTab("auth")} />;
@@ -216,7 +221,7 @@ export default function App() {
             const data = await res.json();
             if (data.url) window.location.href = data.url;
           } catch (e) {
-            alert("Unable to launch OAuth flow. Connecting in simulation mode.");
+            showToast("Unable to launch OAuth flow. Connecting in simulation mode.");
             window.location.href = "/api/auth/cloud/simulate";
           }
         }}

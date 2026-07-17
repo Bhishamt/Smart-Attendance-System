@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from "react";
+import { showToast } from "../utils/toast";
 import {
   Moon,
   Sun,
@@ -90,7 +91,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         window.location.href = data.url;
       }
     } catch (e) {
-      alert("Error connecting to Cloud Storage. Please ensure OAuth client is configured.");
+      showToast("Error connecting to Cloud Storage. Please ensure OAuth client is configured.");
     }
   };
 
@@ -116,10 +117,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         setBackupSuccessMsg(data.message || "Backup uploaded to Cloud Storage!");
         fetchDriveFiles();
       } else {
-        alert(data.error || "Backup failed");
+        showToast(data.error || "Backup failed");
       }
     } catch (e) {
-      alert("Network error during backup.");
+      showToast("Network error during backup.");
     } finally {
       setIsBackingUp(false);
     }
@@ -131,9 +132,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       try {
         const res = await fetch(`/api/drive/restore/${file.id}`, { method: "POST" });
         const data = await res.json();
-        alert(data.message || "Database restored successfully!");
+        showToast(data.message || "Database restored successfully!");
       } catch (e) {
-        alert("Failed to restore database from Drive.");
+        showToast("Failed to restore database from Drive.");
       } finally {
         setIsRestoringId(null);
       }
@@ -406,7 +407,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
           {/* Change Password */}
           <div
-            onClick={() => alert("Password reset verification link sent to admin@institute.edu")}
+            onClick={() => showToast("Password reset verification link sent to admin@institute.edu")}
             className="flex items-center justify-between pt-4 cursor-pointer group"
           >
             <div className="flex items-center gap-3">
@@ -425,7 +426,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
           {/* About App */}
           <div
-            onClick={() => alert("Smart Attendance Management System v2.5.0\nBuilt with React, Vite, Tailwind CSS, Express & Smart AI Assistant.")}
+            onClick={() => showToast("Smart Attendance Management System v2.5.0\nBuilt with React, Vite, Tailwind CSS, Express & Smart AI Assistant.")}
             className="flex items-center justify-between pt-4 cursor-pointer group"
           >
             <div className="flex items-center gap-3">
