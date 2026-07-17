@@ -615,9 +615,13 @@ app.post("/api/students/:id/approve", (req, res) => {
 // ==========================================
 
 const getOAuth2Client = () => {
-  const clientId = process.env.OAUTH_CLIENT_ID || process.env.CLOUD_CLIENT_ID || "DEMO_CLIENT_ID_KEY";
-  const clientSecret = process.env.OAUTH_CLIENT_SECRET || process.env.CLOUD_CLIENT_SECRET || "DEMO_CLIENT_SECRET_KEY";
+  const clientId = process.env.OAUTH_CLIENT_ID;
+  const clientSecret = process.env.OAUTH_CLIENT_SECRET;
   const redirectUri = `${process.env.APP_URL || "http://localhost:3000"}/api/auth/cloud/callback`;
+
+  if (!clientId || !clientSecret) {
+    return null;
+  }
   
   return new google.auth.OAuth2(clientId, clientSecret, redirectUri);
 };
@@ -632,8 +636,7 @@ app.get("/api/auth/cloud/url", (req, res) => {
     "https://www.googleapis.com/auth/userinfo.profile",
   ];
 
-  // If we don't have real client credentials, return a simulated OAuth approval URL handled by our backend
-  if (oauth2Client._clientId === "DEMO_CLIENT_ID_KEY") {
+  if (!oauth2Client) {
     return res.json({
       url: `/api/auth/cloud/simulate`,
       simulated: true,
@@ -693,7 +696,13 @@ app.get("/api/auth/cloud/callback", async (req, res) => {
     };
 
     // Store tokens in HTTP-only cookie or memory
-    res.cookie("gdrive_token", JSON.stringify(tokens), { httpOnly: true, maxAge: 30 * 24 * 3600 * 1000 });
+    res.cookie("gdrive_token", JSON.stringify(tokens), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 30 * 24 * 3600 * 1000,
+      path: "/",
+    });
 
     activitiesData.unshift({
       id: `act-${Date.now()}`,
