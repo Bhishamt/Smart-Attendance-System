@@ -1,5 +1,6 @@
 import express from "express";
 import path from "path";
+import crypto from "crypto";
 import cookieParser from "cookie-parser";
 import { createServer as createViteServer } from "vite";
 import { google } from "googleapis";
@@ -11,6 +12,37 @@ const PORT = 3000;
 
 app.use(express.json({ limit: "50mb" }));
 app.use(cookieParser());
+
+// ── Password Hashing (using Node.js built-in crypto) ──
+const HASH_ALGORITHM = "sha256";
+const HASH_ITERATIONS = 100000;
+const HASH_KEYLEN = 64;
+
+function hashPassword(password: string): string {
+  const salt = crypto.randomBytes(16).toString("hex");
+  const hash = crypto.pbkdf2Sync(password, salt, HASH_ITERATIONS, HASH_KEYLEN, HASH_ALGORITHM).toString("hex");
+  return `${salt}:${hash}`;
+}
+
+function verifyPassword(password: string, stored: string): boolean {
+  const [salt, hash] = stored.split(":");
+  if (!salt || !hash) return false;
+  const computed = crypto.pbkdf2Sync(password, salt, HASH_ITERATIONS, HASH_KEYLEN, HASH_ALGORITHM).toString("hex");
+  return computed === hash;
+}
+
+function generateToken(): string {
+  return crypto.randomBytes(32).toString("hex");
+}
+
+// In-Memory password store (maps email -> hashed password)
+const passwordStore: Record<string, string> = {
+  "woorkcollage@gmail.com": hashPassword("admin123"),
+  "woorkcoolage@gmail.com": hashPassword("admin123"),
+};
+
+// In-Memory sessions (maps token -> email)
+const sessions: Record<string, { email: string; role: string; name: string }> = {};
 
 // In-Memory Database for demonstration & persistence
 export interface Student {
@@ -492,18 +524,39 @@ app.post("/api/staff", (req, res) => {
 
 // Login User
 app.post("/api/login", (req, res) => {
-  const { email } = req.body;
+  const { email, password } = req.body;
+  if (!email) {
+    return res.json({ success: false, error: "missing_email", message: "Email is required." });
+  }
+
+  const storedHash = passwordStore[email];
+  if (storedHash) {
+    if (!password || !verifyPassword(password, storedHash)) {
+      return res.json({ success: false, error: "invalid_password", message: "Invalid email or password." });
+    }
+  }
+
   const staffUser = staffData.find(s => s.email === email);
   if (staffUser) {
-    return res.json({ success: true, user: staffUser });
-  } 
+    if (!storedHash) {
+      return res.json({ success: false, error: "no_password_set", message: "This account has no password configured. Please contact an administrator." });
+    }
+    const token = generateToken();
+    sessions[token] = { email: staffUser.email, role: staffUser.role, name: staffUser.name };
+    return res.json({ success: true, user: { ...staffUser, token } });
+  }
 
   const studentUser = studentsData.find(s => s.email === email);
   if (studentUser) {
+    if (!storedHash) {
+      return res.json({ success: false, error: "no_password_set", message: "Please sign up again to set a password." });
+    }
     if (studentUser.approved === false) {
       return res.json({ success: false, error: "pending_approval", message: "Your account is pending approval by an admin or teacher." });
     }
-    return res.json({ success: true, user: { ...studentUser, role: "Student" } });
+    const token = generateToken();
+    sessions[token] = { email: studentUser.email, role: "Student", name: studentUser.name };
+    return res.json({ success: true, user: { ...studentUser, role: "Student", token } });
   }
 
   res.json({ success: false, error: "not_found", message: "Account not found." });
@@ -513,9 +566,15 @@ app.post("/api/login", (req, res) => {
 app.post("/api/signup", (req, res) => {
   const { name, email, password } = req.body;
   
-  if (staffData.find(s => s.email === email) || studentsData.find(s => s.email === email)) {
+  if (!password || password.length < 6) {
+    return res.json({ success: false, message: "Password must be at least 6 characters long." });
+  }
+
+  if (passwordStore[email] || staffData.find(s => s.email === email) || studentsData.find(s => s.email === email)) {
     return res.json({ success: false, message: "Email already in use." });
   }
+
+  passwordStore[email] = hashPassword(password);
 
   const newStudent = {
     id: `std-${Date.now()}`,
