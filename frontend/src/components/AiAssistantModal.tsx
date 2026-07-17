@@ -136,13 +136,36 @@ export const AiAssistantModal: React.FC<AiAssistantModalProps> = ({ classes, onC
                 if (para.startsWith("*") || para.startsWith("-")) {
                   return (
                     <ul key={idx} className="list-disc pl-5 space-y-1 text-xs sm:text-sm">
-                      {para.split("\n").map((item, iIdx) => (
-                        <li key={iIdx} dangerouslySetInnerHTML={{ __html: item.replace(/[*|-]\s+/, "").replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
-                      ))}
+                      {para.split("\n").map((item, iIdx) => {
+                        const text = item.replace(/[*|-]\s+/, "");
+                        const parts = text.split(/(\*\*.*?\*\*)/g);
+                        return (
+                          <li key={iIdx}>
+                            {parts.map((part, pIdx) =>
+                              part.startsWith("**") && part.endsWith("**") ? (
+                                <strong key={pIdx}>{part.slice(2, -2)}</strong>
+                              ) : (
+                                part
+                              )
+                            )}
+                          </li>
+                        );
+                      })}
                     </ul>
                   );
                 }
-                return <p key={idx} dangerouslySetInnerHTML={{ __html: para.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />;
+                const parts = para.split(/(\*\*.*?\*\*)/g);
+                return (
+                  <p key={idx}>
+                    {parts.map((part, pIdx) =>
+                      part.startsWith("**") && part.endsWith("**") ? (
+                        <strong key={pIdx}>{part.slice(2, -2)}</strong>
+                      ) : (
+                        part
+                      )
+                    )}
+                  </p>
+                );
               })}
             </div>
           ) : null}
