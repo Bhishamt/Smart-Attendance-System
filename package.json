@@ -7,6 +7,7 @@
     "setup": "cd backend && npm install && cd ../frontend && npm install",
     "dev": "cd backend && npm run dev",
     "build": "cd frontend && npm run build",
+    "lint": "npm run lint --prefix frontend && npm run lint --prefix backend",
     "docker:build": "docker compose build",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down"
