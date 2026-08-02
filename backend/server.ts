@@ -18,20 +18,20 @@ const HASH_ALGORITHM = "sha256";
 const HASH_ITERATIONS = 100000;
 const HASH_KEYLEN = 64;
 
-function hashPassword(password: string): string {
+export function hashPassword(password: string): string {
   const salt = crypto.randomBytes(16).toString("hex");
   const hash = crypto.pbkdf2Sync(password, salt, HASH_ITERATIONS, HASH_KEYLEN, HASH_ALGORITHM).toString("hex");
   return `${salt}:${hash}`;
 }
 
-function verifyPassword(password: string, stored: string): boolean {
+export function verifyPassword(password: string, stored: string): boolean {
   const [salt, hash] = stored.split(":");
   if (!salt || !hash) return false;
   const computed = crypto.pbkdf2Sync(password, salt, HASH_ITERATIONS, HASH_KEYLEN, HASH_ALGORITHM).toString("hex");
   return computed === hash;
 }
 
-function generateToken(): string {
+export function generateToken(): string {
   return crypto.randomBytes(32).toString("hex");
 }
 
