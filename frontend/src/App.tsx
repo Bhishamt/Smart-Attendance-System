@@ -221,7 +221,7 @@ export default function App() {
             const data = await res.json();
             if (data.url) window.location.href = data.url;
           } catch (e) {
-            showToast("Unable to launch OAuth flow. Connecting in simulation mode.");
+            setToastMessage("Unable to launch OAuth flow. Connecting in simulation mode.");
             window.location.href = "/api/auth/cloud/simulate";
           }
         }}
