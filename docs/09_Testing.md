@@ -22,13 +22,15 @@ The project uses a three-tier testing approach for quality assurance.
 ## Running Tests
 
 ```bash
-# Frontend tests
-cd frontend
+# Run backend test suite from root
 npm test
 
-# Backend tests
+# Run backend test suite directly
 cd backend
 npm test
+
+# Run tests with tsx test runner
+npx tsx --test backend/server.test.ts
 ```
 
 ## Test Coverage Goals
