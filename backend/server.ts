@@ -35,6 +35,16 @@ export function generateToken(): string {
   return crypto.randomBytes(32).toString("hex");
 }
 
+export function calculateAttendancePercent(present: number, total: number): number {
+  if (!total || total <= 0) return 0;
+  return Math.round((present / total) * 100);
+}
+
+export function isValidEmail(email: string): boolean {
+  if (!email || typeof email !== "string") return false;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
 // In-Memory password store (maps email -> hashed password)
 const passwordStore: Record<string, string> = {
   "woorkcollage@gmail.com": hashPassword("admin123"),
