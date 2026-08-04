@@ -8,7 +8,7 @@ The project uses a three-tier testing approach for quality assurance.
 
 ### Unit Tests
 - **Frontend**: Component rendering, state management, utility functions
-- **Backend**: API endpoint handlers, data transformation, validation
+- **Backend**: API endpoint handlers, data transformation, validation, student status filtering & CSV report export formatting
 
 ### Integration Tests
 - API endpoint integration with in-memory data store
