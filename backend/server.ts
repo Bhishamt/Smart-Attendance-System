@@ -350,20 +350,73 @@ app.get("/api/dashboard", (req, res) => {
   });
 });
 
-// Get all students
-app.get("/api/students", (req, res) => {
-  const { search, classId } = req.query;
-  let filtered = [...studentsData];
-  if (classId && typeof classId === "string") {
-    filtered = filtered.filter(s => s.classId === classId);
+export function generateStudentsCSV(students: Student[]): string {
+  const headers = ["Roll No", "Name", "Class", "Email", "Phone", "Attendance %", "Present Days", "Absent Days", "Status"];
+  const rows = students.map(s => [
+    `"${s.rollNo}"`,
+    `"${s.name.replace(/"/g, '""')}"`,
+    `"${s.className.replace(/"/g, '""')}"`,
+    `"${s.email}"`,
+    `"${s.phone}"`,
+    s.attendancePercent,
+    s.presentDays,
+    s.absentDays,
+    `"${s.status}"`
+  ].join(","));
+  return [headers.join(","), ...rows].join("\n");
+}
+
+export function filterStudentsList(
+  students: Student[],
+  query: { search?: string; classId?: string; status?: string; minAttendance?: string }
+): Student[] {
+  let filtered = [...students];
+  if (query.classId && query.classId !== "all") {
+    filtered = filtered.filter(s => s.classId === query.classId);
   }
-  if (search && typeof search === "string") {
-    const q = search.toLowerCase();
+  if (query.status && query.status !== "all") {
+    filtered = filtered.filter(s => s.status.toLowerCase() === query.status!.toLowerCase());
+  }
+  if (query.minAttendance) {
+    const min = parseFloat(query.minAttendance);
+    if (!isNaN(min)) {
+      filtered = filtered.filter(s => s.attendancePercent >= min);
+    }
+  }
+  if (query.search) {
+    const q = query.search.toLowerCase();
     filtered = filtered.filter(
-      s => s.name.toLowerCase().includes(q) || s.rollNo.includes(q) || s.className.toLowerCase().includes(q)
+      s => s.name.toLowerCase().includes(q) || s.rollNo.includes(q) || s.className.toLowerCase().includes(q) || s.email.toLowerCase().includes(q)
     );
   }
+  return filtered;
+}
+
+// Get all students
+app.get("/api/students", (req, res) => {
+  const { search, classId, status, minAttendance } = req.query;
+  const filtered = filterStudentsList(studentsData, {
+    search: typeof search === "string" ? search : undefined,
+    classId: typeof classId === "string" ? classId : undefined,
+    status: typeof status === "string" ? status : undefined,
+    minAttendance: typeof minAttendance === "string" ? minAttendance : undefined,
+  });
   res.json(filtered);
+});
+
+// Export student attendance CSV
+app.get("/api/students/export/csv", (req, res) => {
+  const { search, classId, status, minAttendance } = req.query;
+  const filtered = filterStudentsList(studentsData, {
+    search: typeof search === "string" ? search : undefined,
+    classId: typeof classId === "string" ? classId : undefined,
+    status: typeof status === "string" ? status : undefined,
+    minAttendance: typeof minAttendance === "string" ? minAttendance : undefined,
+  });
+  const csvContent = generateStudentsCSV(filtered);
+  res.setHeader("Content-Type", "text/csv");
+  res.setHeader("Content-Disposition", "attachment; filename=attendance_report.csv");
+  res.send(csvContent);
 });
 
 // Get single student profile
