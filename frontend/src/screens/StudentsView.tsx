@@ -4,8 +4,9 @@
  */
 
 import React, { useState } from "react";
-import { Search, Plus, Filter, ChevronRight, User, Mail, Phone, Award, School, ScanFace, BookOpen, CheckCircle2, Clock } from "lucide-react";
+import { Search, Plus, Filter, ChevronRight, User, Mail, Phone, Award, School, ScanFace, BookOpen, CheckCircle2, Clock, Download } from "lucide-react";
 import { Student, ClassInfo } from "../types";
+import { exportStudentsToCSV } from "../utils/csvExport";
 
 interface StudentsViewProps {
   students: Student[];
@@ -26,18 +27,20 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedClass, setSelectedClass] = useState("all");
+  const [selectedStatus, setSelectedStatus] = useState("all");
 
   const pendingStudents = students.filter(s => s.approved === false);
   const activeStudents = students.filter(s => s.approved !== false);
 
   const filteredStudents = activeStudents.filter((s) => {
     const matchesClass = selectedClass === "all" || s.classId === selectedClass;
+    const matchesStatus = selectedStatus === "all" || s.status.toLowerCase() === selectedStatus.toLowerCase();
     const matchesSearch =
       s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       s.rollNo.includes(searchQuery) ||
       s.className.toLowerCase().includes(searchQuery.toLowerCase()) ||
       s.email.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesClass && matchesSearch;
+    return matchesClass && matchesStatus && matchesSearch;
   });
 
   return (
@@ -50,13 +53,23 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
             Managing <strong className="text-indigo-600 dark:text-indigo-400">{activeStudents.length} active students</strong> across {classes.length} departments.
           </p>
         </div>
-        <button
-          onClick={onOpenAddStudent}
-          className="px-5 py-3 gradient-bg text-white font-bold rounded-2xl shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 active:scale-95 transition-all flex items-center justify-center gap-2 text-sm shrink-0"
-        >
-          <Plus className="w-5 h-5" />
-          <span>Add New Student</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => exportStudentsToCSV(filteredStudents)}
+            className="px-4 py-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-2xl transition-all flex items-center justify-center gap-2 text-sm shrink-0 shadow-sm border border-slate-200 dark:border-slate-700"
+            title="Download CSV Report"
+          >
+            <Download className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+            <span>Export CSV</span>
+          </button>
+          <button
+            onClick={onOpenAddStudent}
+            className="px-5 py-3 gradient-bg text-white font-bold rounded-2xl shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 active:scale-95 transition-all flex items-center justify-center gap-2 text-sm shrink-0"
+          >
+            <Plus className="w-5 h-5" />
+            <span>Add New Student</span>
+          </button>
+        </div>
       </div>
 
       {/* Pending Approvals Section */}
@@ -89,7 +102,7 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
       )}
 
       {/* Filter and Search Bar */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
         <div className="sm:col-span-2 relative">
           <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
@@ -122,6 +135,22 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
                 {c.name}
               </option>
             ))}
+          </select>
+          <Filter className="w-4 h-4 text-slate-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+        </div>
+
+        {/* Status Filter */}
+        <div className="relative">
+          <select
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value)}
+            className="w-full bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl py-3 pl-4 pr-10 text-sm font-bold text-slate-700 dark:text-slate-300 shadow-sm focus:ring-2 focus:ring-indigo-500 transition-all appearance-none cursor-pointer"
+          >
+            <option value="all">All Statuses</option>
+            <option value="Present">Present</option>
+            <option value="Absent">Absent</option>
+            <option value="Late">Late</option>
+            <option value="Medical">Medical</option>
           </select>
           <Filter className="w-4 h-4 text-slate-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
         </div>
