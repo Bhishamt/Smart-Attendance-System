@@ -6,6 +6,9 @@ import {
   generateToken,
   calculateAttendancePercent,
   isValidEmail,
+  generateStudentsCSV,
+  filterStudentsList,
+  Student,
 } from "./server.ts";
 
 describe("Backend Auth & Security Suite", () => {
@@ -63,5 +66,65 @@ describe("Backend Data & Validation Utilities", () => {
     assert.equal(isValidEmail("invalid-email"), false);
     assert.equal(isValidEmail("user@domain"), false);
     assert.equal(isValidEmail(""), false);
+  });
+});
+
+describe("Student Filter & CSV Generation Suite", () => {
+  const mockStudents: Student[] = [
+    {
+      id: "s1",
+      name: "Alice Smith",
+      rollNo: "101",
+      classId: "cs-3b",
+      className: "Computer Science - 3B",
+      email: "alice@example.com",
+      phone: "+91 9999911111",
+      attendancePercent: 90,
+      totalClasses: 20,
+      presentDays: 18,
+      absentDays: 2,
+      status: "Present",
+      photo: "photo1.jpg",
+    },
+    {
+      id: "s2",
+      name: "Bob Jones",
+      rollNo: "102",
+      classId: "ce-2a",
+      className: "Civil Engineering - 2A",
+      email: "bob@example.com",
+      phone: "+91 9999922222",
+      attendancePercent: 60,
+      totalClasses: 20,
+      presentDays: 12,
+      absentDays: 8,
+      status: "Absent",
+      photo: "photo2.jpg",
+    },
+  ];
+
+  it("should filter students by classId correctly", () => {
+    const res = filterStudentsList(mockStudents, { classId: "cs-3b" });
+    assert.equal(res.length, 1);
+    assert.equal(res[0].name, "Alice Smith");
+  });
+
+  it("should filter students by status correctly", () => {
+    const res = filterStudentsList(mockStudents, { status: "absent" });
+    assert.equal(res.length, 1);
+    assert.equal(res[0].name, "Bob Jones");
+  });
+
+  it("should filter students by minimum attendance percentage", () => {
+    const res = filterStudentsList(mockStudents, { minAttendance: "75" });
+    assert.equal(res.length, 1);
+    assert.equal(res[0].name, "Alice Smith");
+  });
+
+  it("should generate valid CSV header and rows from student list", () => {
+    const csv = generateStudentsCSV(mockStudents);
+    assert.ok(csv.includes("Roll No,Name,Class,Email,Phone,Attendance %,Present Days,Absent Days,Status"));
+    assert.ok(csv.includes('"101","Alice Smith","Computer Science - 3B","alice@example.com"'));
+    assert.ok(csv.includes('"102","Bob Jones","Civil Engineering - 2A","bob@example.com"'));
   });
 });
