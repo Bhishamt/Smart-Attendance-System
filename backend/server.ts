@@ -392,6 +392,49 @@ export function filterStudentsList(
   return filtered;
 }
 
+export interface StudentSummaryStats {
+  totalStudents: number;
+  avgAttendancePercent: number;
+  statusBreakdown: {
+    Present: number;
+    Absent: number;
+    Late: number;
+    Medical: number;
+  };
+  biometricRegisteredCount: number;
+}
+
+export function calculateSummaryStats(students: Student[]): StudentSummaryStats {
+  const total = students.length;
+  if (total === 0) {
+    return {
+      totalStudents: 0,
+      avgAttendancePercent: 0,
+      statusBreakdown: { Present: 0, Absent: 0, Late: 0, Medical: 0 },
+      biometricRegisteredCount: 0,
+    };
+  }
+
+  const sumPercent = students.reduce((acc, s) => acc + s.attendancePercent, 0);
+  const avgAttendancePercent = Math.round(sumPercent / total);
+
+  const statusBreakdown = {
+    Present: students.filter((s) => s.status === "Present").length,
+    Absent: students.filter((s) => s.status === "Absent").length,
+    Late: students.filter((s) => s.status === "Late").length,
+    Medical: students.filter((s) => s.status === "Medical").length,
+  };
+
+  const biometricRegisteredCount = students.filter((s) => s.biometricRegistered).length;
+
+  return {
+    totalStudents: total,
+    avgAttendancePercent,
+    statusBreakdown,
+    biometricRegisteredCount,
+  };
+}
+
 // Get all students
 app.get("/api/students", (req, res) => {
   const { search, classId, status, minAttendance } = req.query;
@@ -402,6 +445,19 @@ app.get("/api/students", (req, res) => {
     minAttendance: typeof minAttendance === "string" ? minAttendance : undefined,
   });
   res.json(filtered);
+});
+
+// Get student attendance summary statistics
+app.get("/api/students/summary", (req, res) => {
+  const { search, classId, status, minAttendance } = req.query;
+  const filtered = filterStudentsList(studentsData, {
+    search: typeof search === "string" ? search : undefined,
+    classId: typeof classId === "string" ? classId : undefined,
+    status: typeof status === "string" ? status : undefined,
+    minAttendance: typeof minAttendance === "string" ? minAttendance : undefined,
+  });
+  const summary = calculateSummaryStats(filtered);
+  res.json(summary);
 });
 
 // Export student attendance CSV
@@ -417,6 +473,69 @@ app.get("/api/students/export/csv", (req, res) => {
   res.setHeader("Content-Type", "text/csv");
   res.setHeader("Content-Disposition", "attachment; filename=attendance_report.csv");
   res.send(csvContent);
+});
+
+// Bulk update student status
+app.post("/api/students/bulk-status", (req, res) => {
+  const { studentIds, status } = req.body;
+  const validStatuses: Student["status"][] = ["Present", "Absent", "Late", "Medical"];
+
+  if (!Array.isArray(studentIds) || studentIds.length === 0) {
+    return res.status(400).json({ error: "studentIds array is required and cannot be empty" });
+  }
+
+  if (!status || !validStatuses.includes(status)) {
+    return res.status(400).json({ error: `Invalid status. Must be one of: ${validStatuses.join(", ")}` });
+  }
+
+  const updatedStudents: Student[] = [];
+  studentsData = studentsData.map((student) => {
+    if (studentIds.includes(student.id)) {
+      const prevStatus = student.status;
+      let present = student.presentDays;
+      let absent = student.absentDays;
+      const total = student.totalClasses || 1;
+
+      if ((status === "Present" || status === "Late") && prevStatus === "Absent") {
+        present += 1;
+        if (absent > 0) absent -= 1;
+      } else if (status === "Absent" && (prevStatus === "Present" || prevStatus === "Late")) {
+        absent += 1;
+        if (present > 0) present -= 1;
+      }
+
+      const updatedPercent = calculateAttendancePercent(present, total);
+      const updated: Student = {
+        ...student,
+        status: status as Student["status"],
+        presentDays: present,
+        absentDays: absent,
+        attendancePercent: updatedPercent,
+        lastMarkedTime: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+      updatedStudents.push(updated);
+      return updated;
+    }
+    return student;
+  });
+
+  if (updatedStudents.length > 0) {
+    const newActivity: AttendanceActivity = {
+      id: `act-${Date.now()}`,
+      title: `Bulk status update to ${status}`,
+      subtitle: `${updatedStudents.length} students updated`,
+      timeAgo: "Just now",
+      type: "attendance",
+      timestamp: new Date().toISOString(),
+    };
+    activitiesData.unshift(newActivity);
+  }
+
+  res.json({
+    message: `Successfully updated ${updatedStudents.length} student(s) to ${status}`,
+    updatedCount: updatedStudents.length,
+    updatedStudents,
+  });
 });
 
 // Get single student profile
