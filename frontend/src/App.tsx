@@ -120,6 +120,27 @@ export default function App() {
     }
   };
 
+  const handleBulkStatusUpdate = async (studentIds: string[], status: Student["status"]) => {
+    try {
+      const res = await fetch("/api/students/bulk-status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ studentIds, status }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setToastMessage(`✅ Updated ${data.updatedCount} student(s) status to ${status}!`);
+        confetti({ particleCount: 40, spread: 60, origin: { y: 0.7 } });
+        fetchData();
+      } else {
+        setToastMessage("⚠️ Failed to update student statuses. Please try again.");
+      }
+    } catch (e) {
+      console.error("Error bulk updating status:", e);
+      setToastMessage("⚠️ Network error during bulk status update.");
+    }
+  };
+
   const handleAddStudent = async (studentData: any) => {
     try {
       const res = await fetch("/api/students", {
@@ -325,6 +346,7 @@ export default function App() {
               onSelectStudent={handleSelectStudent}
               onApproveStudent={handleApproveStudent}
               onOpenAddStudent={() => setShowAddStudentModal(true)}
+              onBulkStatusUpdate={handleBulkStatusUpdate}
             />
           )}
 

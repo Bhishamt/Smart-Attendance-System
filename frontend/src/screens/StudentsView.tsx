@@ -4,17 +4,39 @@
  */
 
 import React, { useState } from "react";
-import { Search, Plus, Filter, ChevronRight, User, Mail, Phone, Award, School, ScanFace, BookOpen, CheckCircle2, Clock, Download } from "lucide-react";
+import {
+  Search,
+  Plus,
+  Filter,
+  ChevronRight,
+  User,
+  Mail,
+  Phone,
+  Award,
+  School,
+  ScanFace,
+  BookOpen,
+  CheckCircle2,
+  Clock,
+  Download,
+  CheckSquare,
+  Square,
+  Users,
+  BarChart3,
+  XCircle,
+  AlertCircle,
+} from "lucide-react";
 import { Student, ClassInfo } from "../types";
 import { exportStudentsToCSV } from "../utils/csvExport";
 
 interface StudentsViewProps {
   students: Student[];
   classes: ClassInfo[];
-  currentUser: { email: string, role: string } | null;
+  currentUser: { email: string; role: string } | null;
   onSelectStudent: (id: string) => void;
   onApproveStudent: (id: string) => void;
   onOpenAddStudent: () => void;
+  onBulkStatusUpdate?: (studentIds: string[], status: Student["status"]) => void;
 }
 
 export const StudentsView: React.FC<StudentsViewProps> = ({
@@ -24,13 +46,15 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
   onSelectStudent,
   onApproveStudent,
   onOpenAddStudent,
+  onBulkStatusUpdate,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedClass, setSelectedClass] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
+  const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
 
-  const pendingStudents = students.filter(s => s.approved === false);
-  const activeStudents = students.filter(s => s.approved !== false);
+  const pendingStudents = students.filter((s) => s.approved === false);
+  const activeStudents = students.filter((s) => s.approved !== false);
 
   const filteredStudents = activeStudents.filter((s) => {
     const matchesClass = selectedClass === "all" || s.classId === selectedClass;
@@ -43,8 +67,42 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
     return matchesClass && matchesStatus && matchesSearch;
   });
 
+  const presentCount = filteredStudents.filter((s) => s.status === "Present").length;
+  const absentCount = filteredStudents.filter((s) => s.status === "Absent").length;
+  const lateCount = filteredStudents.filter((s) => s.status === "Late").length;
+  const medicalCount = filteredStudents.filter((s) => s.status === "Medical").length;
+  const avgAttendance = filteredStudents.length
+    ? Math.round(filteredStudents.reduce((acc, s) => acc + s.attendancePercent, 0) / filteredStudents.length)
+    : 0;
+
+  const allFilteredSelected =
+    filteredStudents.length > 0 && filteredStudents.every((s) => selectedStudentIds.includes(s.id));
+
+  const toggleSelectAll = () => {
+    if (allFilteredSelected) {
+      setSelectedStudentIds([]);
+    } else {
+      setSelectedStudentIds(filteredStudents.map((s) => s.id));
+    }
+  };
+
+  const toggleSelectStudent = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedStudentIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleApplyBulkStatus = (status: Student["status"]) => {
+    if (selectedStudentIds.length === 0) return;
+    if (onBulkStatusUpdate) {
+      onBulkStatusUpdate(selectedStudentIds, status);
+      setSelectedStudentIds([]);
+    }
+  };
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 animate-in fade-in duration-300 pb-28">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 animate-in fade-in duration-300 pb-32 relative">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -72,6 +130,49 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
         </div>
       </div>
 
+      {/* Attendance Summary Analytics Banner */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="bg-white dark:bg-slate-800/90 border border-slate-100 dark:border-slate-800 rounded-3xl p-4 shadow-sm flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+            <Users className="w-5 h-5" />
+          </div>
+          <div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Listed</span>
+            <div className="text-lg font-extrabold text-slate-800 dark:text-white">{filteredStudents.length}</div>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-slate-800/90 border border-slate-100 dark:border-slate-800 rounded-3xl p-4 shadow-sm flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+            <CheckCircle2 className="w-5 h-5" />
+          </div>
+          <div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Present</span>
+            <div className="text-lg font-extrabold text-emerald-600 dark:text-emerald-400">{presentCount}</div>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-slate-800/90 border border-slate-100 dark:border-slate-800 rounded-3xl p-4 shadow-sm flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
+            <XCircle className="w-5 h-5" />
+          </div>
+          <div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Absent / Medical</span>
+            <div className="text-lg font-extrabold text-red-600 dark:text-red-400">{absentCount + medicalCount}</div>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-slate-800/90 border border-slate-100 dark:border-slate-800 rounded-3xl p-4 shadow-sm flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+            <BarChart3 className="w-5 h-5" />
+          </div>
+          <div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Avg Attendance</span>
+            <div className="text-lg font-extrabold text-blue-600 dark:text-blue-400">{avgAttendance}%</div>
+          </div>
+        </div>
+      </div>
+
       {/* Pending Approvals Section */}
       {currentUser?.role !== "Student" && pendingStudents.length > 0 && (
         <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-3xl p-5 shadow-sm">
@@ -80,7 +181,7 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
             <h3 className="font-bold text-slate-800 dark:text-white text-sm">Pending Approvals ({pendingStudents.length})</h3>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {pendingStudents.map(student => (
+            {pendingStudents.map((student) => (
               <div key={student.id} className="bg-white dark:bg-slate-800 border border-amber-100 dark:border-amber-900/50 rounded-2xl p-4 flex justify-between items-center">
                 <div className="flex items-center gap-3">
                   <img src={student.photo} alt={student.name} className="w-10 h-10 rounded-full" />
@@ -102,8 +203,8 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
       )}
 
       {/* Filter and Search Bar */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-        <div className="sm:col-span-2 relative">
+      <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+        <div className="sm:col-span-5 relative">
           <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
@@ -123,7 +224,7 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
         </div>
 
         {/* Department Filter */}
-        <div className="relative">
+        <div className="sm:col-span-3 relative">
           <select
             value={selectedClass}
             onChange={(e) => setSelectedClass(e.target.value)}
@@ -140,7 +241,7 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
         </div>
 
         {/* Status Filter */}
-        <div className="relative">
+        <div className="sm:col-span-2 relative">
           <select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
@@ -154,7 +255,73 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
           </select>
           <Filter className="w-4 h-4 text-slate-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
         </div>
+
+        {/* Select All Toggle */}
+        <div className="sm:col-span-2 flex items-center">
+          <button
+            onClick={toggleSelectAll}
+            className={`w-full py-3 px-3 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 border transition-all ${
+              allFilteredSelected
+                ? "bg-indigo-600 text-white border-indigo-600 shadow-md"
+                : "bg-white dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-50"
+            }`}
+          >
+            {allFilteredSelected ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4 text-slate-400" />}
+            <span>{allFilteredSelected ? "Deselect All" : "Select All"}</span>
+          </button>
+        </div>
       </div>
+
+      {/* Floating Batch Action Toolbar */}
+      {selectedStudentIds.length > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900/90 backdrop-blur-md border border-slate-700 text-white px-5 py-3.5 rounded-3xl shadow-2xl flex flex-wrap items-center gap-3 animate-in slide-in-from-bottom-5 duration-200 max-w-full">
+          <span className="text-xs font-extrabold bg-indigo-600 px-3 py-1 rounded-full shrink-0">
+            {selectedStudentIds.length} Selected
+          </span>
+
+          <div className="h-4 w-px bg-slate-700 hidden sm:block shrink-0" />
+
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => handleApplyBulkStatus("Present")}
+              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition-colors flex items-center gap-1"
+            >
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>Mark Present</span>
+            </button>
+            <button
+              onClick={() => handleApplyBulkStatus("Absent")}
+              className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl text-xs transition-colors flex items-center gap-1"
+            >
+              <XCircle className="w-3.5 h-3.5" />
+              <span>Mark Absent</span>
+            </button>
+            <button
+              onClick={() => handleApplyBulkStatus("Late")}
+              className="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl text-xs transition-colors flex items-center gap-1"
+            >
+              <Clock className="w-3.5 h-3.5" />
+              <span>Mark Late</span>
+            </button>
+            <button
+              onClick={() => handleApplyBulkStatus("Medical")}
+              className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs transition-colors flex items-center gap-1"
+            >
+              <AlertCircle className="w-3.5 h-3.5" />
+              <span>Medical Leave</span>
+            </button>
+          </div>
+
+          <div className="h-4 w-px bg-slate-700 hidden sm:block shrink-0" />
+
+          <button
+            onClick={() => setSelectedStudentIds([])}
+            className="text-xs text-slate-400 hover:text-white font-bold underline px-2 py-1 shrink-0"
+          >
+            Clear Selection
+          </button>
+        </div>
+      )}
 
       {/* Grid of Students */}
       {filteredStudents.length === 0 ? (
@@ -170,6 +337,7 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
             onClick={() => {
               setSearchQuery("");
               setSelectedClass("all");
+              setSelectedStatus("all");
             }}
             className="px-4 py-2 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 font-bold text-xs rounded-xl hover:bg-indigo-100"
           >
@@ -181,17 +349,34 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
           {filteredStudents.map((student) => {
             const isHigh = student.attendancePercent >= 85;
             const isMed = student.attendancePercent >= 75 && student.attendancePercent < 85;
-            const isLow = student.attendancePercent < 75;
+            const isSelected = selectedStudentIds.includes(student.id);
 
             return (
               <div
                 key={student.id}
                 onClick={() => onSelectStudent(student.id)}
-                className="glass-card rounded-3xl p-5 hover:shadow-lg transition-all cursor-pointer group border border-slate-100 dark:border-slate-800 flex flex-col justify-between"
+                className={`glass-card rounded-3xl p-5 hover:shadow-lg transition-all cursor-pointer group border flex flex-col justify-between relative ${
+                  isSelected
+                    ? "border-indigo-500 ring-2 ring-indigo-500/30 bg-indigo-50/20 dark:bg-indigo-950/20"
+                    : "border-slate-100 dark:border-slate-800"
+                }`}
               >
                 <div>
                   <div className="flex items-start justify-between gap-3 mb-4">
                     <div className="flex items-center gap-3.5">
+                      <button
+                        type="button"
+                        onClick={(e) => toggleSelectStudent(student.id, e)}
+                        className="text-indigo-600 dark:text-indigo-400 hover:scale-110 transition-transform p-0.5"
+                        title={isSelected ? "Deselect student" : "Select student"}
+                      >
+                        {isSelected ? (
+                          <CheckSquare className="w-5 h-5 fill-indigo-600 text-white dark:fill-indigo-500 dark:text-slate-900" />
+                        ) : (
+                          <Square className="w-5 h-5 text-slate-300 dark:text-slate-600 hover:text-indigo-500" />
+                        )}
+                      </button>
+
                       <div className="relative shrink-0">
                         <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-indigo-500/20 shadow-sm group-hover:scale-105 transition-transform">
                           <img src={student.photo} alt={student.name} className="w-full h-full object-cover" />
