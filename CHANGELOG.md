@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.5] - 2026-08-06
+
+### Added
+- Bulk student attendance status update endpoint (`POST /api/students/bulk-status`) and attendance analytics summary endpoint (`GET /api/students/summary`).
+- Summary analytics metrics cards (Total Listed, Present, Absent/Medical, Avg Attendance %) in frontend `StudentsView`.
+- Multi-select checkbox selection for student directory cards with "Select All" / "Deselect All" filter controls.
+- Floating batch action toolbar allowing one-click status updates (`Present`, `Absent`, `Late`, `Medical`) for multiple selected students.
+- Unit test suite coverage in `server.test.ts` for `calculateSummaryStats` utility and edge case handling.
+
 ## [1.0.4] - 2026-08-04
 
 ### Added
