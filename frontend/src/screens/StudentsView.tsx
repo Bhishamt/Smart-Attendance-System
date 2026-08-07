@@ -51,6 +51,7 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedClass, setSelectedClass] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
+  const [showAtRiskOnly, setShowAtRiskOnly] = useState(false);
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
 
   const pendingStudents = students.filter((s) => s.approved === false);
@@ -59,12 +60,13 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
   const filteredStudents = activeStudents.filter((s) => {
     const matchesClass = selectedClass === "all" || s.classId === selectedClass;
     const matchesStatus = selectedStatus === "all" || s.status.toLowerCase() === selectedStatus.toLowerCase();
+    const matchesRisk = !showAtRiskOnly || s.attendancePercent < 75;
     const matchesSearch =
       s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       s.rollNo.includes(searchQuery) ||
       s.className.toLowerCase().includes(searchQuery.toLowerCase()) ||
       s.email.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesClass && matchesStatus && matchesSearch;
+    return matchesClass && matchesStatus && matchesRisk && matchesSearch;
   });
 
   const presentCount = filteredStudents.filter((s) => s.status === "Present").length;
@@ -204,7 +206,8 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
 
       {/* Filter and Search Bar */}
       <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
-        <div className="sm:col-span-5 relative">
+        {/* Search */}
+        <div className="sm:col-span-4 relative">
           <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
@@ -256,8 +259,25 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
           <Filter className="w-4 h-4 text-slate-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
         </div>
 
+        {/* At Risk Quick Filter */}
+        <div className="sm:col-span-1.5 flex items-center">
+          <button
+            type="button"
+            onClick={() => setShowAtRiskOnly(!showAtRiskOnly)}
+            className={`w-full py-3 px-3 rounded-2xl font-bold text-xs flex items-center justify-center gap-1.5 border transition-all ${
+              showAtRiskOnly
+                ? "bg-red-600 text-white border-red-600 shadow-md shadow-red-500/20"
+                : "bg-white dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-50"
+            }`}
+            title="Filter students with attendance < 75%"
+          >
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>At Risk</span>
+          </button>
+        </div>
+
         {/* Select All Toggle */}
-        <div className="sm:col-span-2 flex items-center">
+        <div className="sm:col-span-1.5 flex items-center">
           <button
             onClick={toggleSelectAll}
             className={`w-full py-3 px-3 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 border transition-all ${
@@ -267,9 +287,10 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
             }`}
           >
             {allFilteredSelected ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4 text-slate-400" />}
-            <span>{allFilteredSelected ? "Deselect All" : "Select All"}</span>
+            <span>{allFilteredSelected ? "Deselect" : "Select All"}</span>
           </button>
         </div>
+
       </div>
 
       {/* Floating Batch Action Toolbar */}
@@ -402,8 +423,8 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
                       </div>
                     </div>
 
-                    {/* Attendance Percentage Badge */}
-                    <div className="text-right shrink-0">
+                    {/* Attendance Percentage & Risk Level Badge */}
+                    <div className="flex flex-col items-end gap-1 shrink-0">
                       <span
                         className={`inline-block px-2.5 py-1 rounded-full text-xs font-extrabold ${
                           isHigh
@@ -415,8 +436,27 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
                       >
                         {student.attendancePercent}%
                       </span>
-                      <span className="block text-[9px] text-slate-400 font-semibold mt-0.5">Attendance</span>
+                      <span
+                        className={`inline-block text-[9px] font-extrabold px-2 py-0.5 rounded-md ${
+                          student.attendancePercent < 60
+                            ? "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300"
+                            : student.attendancePercent < 75
+                            ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+                            : student.attendancePercent < 85
+                            ? "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300"
+                            : "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                        }`}
+                      >
+                        {student.attendancePercent < 60
+                          ? "Critical Risk"
+                          : student.attendancePercent < 75
+                          ? "High Risk"
+                          : student.attendancePercent < 85
+                          ? "Moderate"
+                          : "Good"}
+                      </span>
                     </div>
+
                   </div>
 
                   {/* Info list */}
