@@ -435,6 +435,50 @@ export function calculateSummaryStats(students: Student[]): StudentSummaryStats 
   };
 }
 
+export type RiskLevel = "Critical" | "High" | "Moderate" | "Good";
+
+export function calculateRiskLevel(attendancePercent: number): RiskLevel {
+  if (attendancePercent < 60) return "Critical";
+  if (attendancePercent < 75) return "High";
+  if (attendancePercent < 85) return "Moderate";
+  return "Good";
+}
+
+export interface AtRiskReport {
+  threshold: number;
+  totalAtRisk: number;
+  breakdown: {
+    critical: number;
+    high: number;
+    moderate: number;
+  };
+  students: (Student & { riskLevel: RiskLevel })[];
+}
+
+export function getAtRiskStudents(students: Student[], threshold: number = 75): AtRiskReport {
+  const safeThreshold = isNaN(threshold) || threshold <= 0 ? 75 : threshold;
+  const atRiskList = students
+    .filter((s) => s.attendancePercent < safeThreshold)
+    .map((s) => ({
+      ...s,
+      riskLevel: calculateRiskLevel(s.attendancePercent),
+    }));
+
+  const breakdown = {
+    critical: atRiskList.filter((s) => s.riskLevel === "Critical").length,
+    high: atRiskList.filter((s) => s.riskLevel === "High").length,
+    moderate: atRiskList.filter((s) => s.riskLevel === "Moderate").length,
+  };
+
+  return {
+    threshold: safeThreshold,
+    totalAtRisk: atRiskList.length,
+    breakdown,
+    students: atRiskList,
+  };
+}
+
+
 // Get all students
 app.get("/api/students", (req, res) => {
   const { search, classId, status, minAttendance } = req.query;
@@ -459,6 +503,15 @@ app.get("/api/students/summary", (req, res) => {
   const summary = calculateSummaryStats(filtered);
   res.json(summary);
 });
+
+// Get at-risk students with low attendance
+app.get("/api/students/at-risk", (req, res) => {
+  const thresholdParam = typeof req.query.threshold === "string" ? parseFloat(req.query.threshold) : 75;
+  const threshold = isNaN(thresholdParam) ? 75 : thresholdParam;
+  const report = getAtRiskStudents(studentsData, threshold);
+  res.json(report);
+});
+
 
 // Export student attendance CSV
 app.get("/api/students/export/csv", (req, res) => {
