@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.6] - 2026-08-07
+
+### Added
+- Attendance risk level assessment utilities (`calculateRiskLevel`, `getAtRiskStudents`) and low-attendance endpoint (`GET /api/students/at-risk`).
+- Quick "At Risk" filter toggle (<75% attendance) and color-coded Risk Level badges (`Critical Risk`, `High Risk`, `Moderate`, `Good`) on student cards in `StudentsView`.
+- Expanded unit test suite (`Attendance Risk Assessment Suite`) in `server.test.ts` covering risk level calculations, custom thresholds, and at-risk breakdown reports.
+
 ## [1.0.5] - 2026-08-06
 
 ### Added
