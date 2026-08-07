@@ -9,6 +9,8 @@ import {
   generateStudentsCSV,
   filterStudentsList,
   calculateSummaryStats,
+  calculateRiskLevel,
+  getAtRiskStudents,
   Student,
 } from "./server.ts";
 
@@ -337,3 +339,81 @@ describe("Student Filter & CSV Generation Suite", () => {
     assert.ok(csv.includes('"102","Bob Jones","Civil Engineering - 2A","bob@example.com"'));
   });
 });
+
+describe("Attendance Risk Assessment Suite", () => {
+  it("should calculate correct risk levels based on attendance percentage threshold", () => {
+    assert.equal(calculateRiskLevel(50), "Critical");
+    assert.equal(calculateRiskLevel(65), "High");
+    assert.equal(calculateRiskLevel(80), "Moderate");
+    assert.equal(calculateRiskLevel(92), "Good");
+  });
+
+  it("should accurately identify at-risk students and group risk severity breakdown", () => {
+    const mockStudents: Student[] = [
+      {
+        id: "s1",
+        name: "Critical Risk Student",
+        rollNo: "201",
+        classId: "cs-3b",
+        className: "CS - 3B",
+        email: "crit@example.com",
+        phone: "+91 1000000000",
+        attendancePercent: 55,
+        totalClasses: 20,
+        presentDays: 11,
+        absentDays: 9,
+        status: "Absent",
+        photo: "",
+      },
+      {
+        id: "s2",
+        name: "High Risk Student",
+        rollNo: "202",
+        classId: "cs-3b",
+        className: "CS - 3B",
+        email: "high@example.com",
+        phone: "+91 2000000000",
+        attendancePercent: 70,
+        totalClasses: 20,
+        presentDays: 14,
+        absentDays: 6,
+        status: "Absent",
+        photo: "",
+      },
+      {
+        id: "s3",
+        name: "Good Student",
+        rollNo: "203",
+        classId: "cs-3b",
+        className: "CS - 3B",
+        email: "good@example.com",
+        phone: "+91 3000000000",
+        attendancePercent: 95,
+        totalClasses: 20,
+        presentDays: 19,
+        absentDays: 1,
+        status: "Present",
+        photo: "",
+      },
+    ];
+
+    const report = getAtRiskStudents(mockStudents, 75);
+    assert.equal(report.threshold, 75);
+    assert.equal(report.totalAtRisk, 2);
+    assert.equal(report.breakdown.critical, 1);
+    assert.equal(report.breakdown.high, 1);
+    assert.equal(report.breakdown.moderate, 0);
+    assert.equal(report.students[0].riskLevel, "Critical");
+    assert.equal(report.students[1].riskLevel, "High");
+  });
+
+  it("should handle custom thresholds and empty student lists safely", () => {
+    const emptyReport = getAtRiskStudents([], 75);
+    assert.equal(emptyReport.totalAtRisk, 0);
+    assert.equal(emptyReport.breakdown.critical, 0);
+
+    const customReport = getAtRiskStudents([], -10);
+    assert.equal(customReport.threshold, 75);
+  });
+});
+
