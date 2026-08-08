@@ -51,8 +51,13 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedClass, setSelectedClass] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
+  const [selectedSubject, setSelectedSubject] = useState("all");
   const [showAtRiskOnly, setShowAtRiskOnly] = useState(false);
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
+
+  const availableSubjects = Array.from(
+    new Set(students.map((s) => s.subject).filter(Boolean) as string[])
+  );
 
   const pendingStudents = students.filter((s) => s.approved === false);
   const activeStudents = students.filter((s) => s.approved !== false);
@@ -60,13 +65,16 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
   const filteredStudents = activeStudents.filter((s) => {
     const matchesClass = selectedClass === "all" || s.classId === selectedClass;
     const matchesStatus = selectedStatus === "all" || s.status.toLowerCase() === selectedStatus.toLowerCase();
+    const matchesSubject = selectedSubject === "all" || (s.subject && s.subject.toLowerCase() === selectedSubject.toLowerCase());
     const matchesRisk = !showAtRiskOnly || s.attendancePercent < 75;
     const matchesSearch =
       s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.rollNo.includes(searchQuery) ||
+      s.rollNo.toLowerCase().includes(searchQuery.toLowerCase()) ||
       s.className.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.email.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesClass && matchesStatus && matchesRisk && matchesSearch;
+      s.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (s.subject && s.subject.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (s.phone && s.phone.includes(searchQuery));
+    return matchesClass && matchesStatus && matchesSubject && matchesRisk && matchesSearch;
   });
 
   const presentCount = filteredStudents.filter((s) => s.status === "Present").length;
@@ -213,7 +221,7 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by student name, roll number, or email..."
+            placeholder="Search by name, roll no, email, subject, or phone..."
             className="w-full bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl py-3 pl-11 pr-4 text-sm focus:ring-2 focus:ring-indigo-500 transition-all shadow-sm outline-none"
           />
           {searchQuery && (
@@ -237,6 +245,23 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
             {classes.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
+              </option>
+            ))}
+          </select>
+          <Filter className="w-4 h-4 text-slate-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+        </div>
+
+        {/* Subject Filter */}
+        <div className="sm:col-span-3 relative">
+          <select
+            value={selectedSubject}
+            onChange={(e) => setSelectedSubject(e.target.value)}
+            className="w-full bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl py-3 pl-4 pr-10 text-sm font-bold text-slate-700 dark:text-slate-300 shadow-sm focus:ring-2 focus:ring-indigo-500 transition-all appearance-none cursor-pointer"
+          >
+            <option value="all">All Subjects</option>
+            {availableSubjects.map((sub) => (
+              <option key={sub} value={sub}>
+                {sub}
               </option>
             ))}
           </select>
