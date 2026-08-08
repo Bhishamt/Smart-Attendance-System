@@ -368,7 +368,7 @@ export function generateStudentsCSV(students: Student[]): string {
 
 export function filterStudentsList(
   students: Student[],
-  query: { search?: string; classId?: string; status?: string; minAttendance?: string }
+  query: { search?: string; classId?: string; status?: string; minAttendance?: string; subject?: string }
 ): Student[] {
   let filtered = [...students];
   if (query.classId && query.classId !== "all") {
@@ -377,6 +377,9 @@ export function filterStudentsList(
   if (query.status && query.status !== "all") {
     filtered = filtered.filter(s => s.status.toLowerCase() === query.status!.toLowerCase());
   }
+  if (query.subject && query.subject !== "all") {
+    filtered = filtered.filter(s => s.subject && s.subject.toLowerCase().includes(query.subject!.toLowerCase()));
+  }
   if (query.minAttendance) {
     const min = parseFloat(query.minAttendance);
     if (!isNaN(min)) {
@@ -384,9 +387,15 @@ export function filterStudentsList(
     }
   }
   if (query.search) {
-    const q = query.search.toLowerCase();
+    const q = query.search.toLowerCase().trim();
     filtered = filtered.filter(
-      s => s.name.toLowerCase().includes(q) || s.rollNo.includes(q) || s.className.toLowerCase().includes(q) || s.email.toLowerCase().includes(q)
+      s =>
+        s.name.toLowerCase().includes(q) ||
+        s.rollNo.toLowerCase().includes(q) ||
+        s.className.toLowerCase().includes(q) ||
+        s.email.toLowerCase().includes(q) ||
+        (s.subject && s.subject.toLowerCase().includes(q)) ||
+        (s.phone && s.phone.includes(q))
     );
   }
   return filtered;
@@ -481,24 +490,26 @@ export function getAtRiskStudents(students: Student[], threshold: number = 75): 
 
 // Get all students
 app.get("/api/students", (req, res) => {
-  const { search, classId, status, minAttendance } = req.query;
+  const { search, classId, status, minAttendance, subject } = req.query;
   const filtered = filterStudentsList(studentsData, {
     search: typeof search === "string" ? search : undefined,
     classId: typeof classId === "string" ? classId : undefined,
     status: typeof status === "string" ? status : undefined,
     minAttendance: typeof minAttendance === "string" ? minAttendance : undefined,
+    subject: typeof subject === "string" ? subject : undefined,
   });
   res.json(filtered);
 });
 
 // Get student attendance summary statistics
 app.get("/api/students/summary", (req, res) => {
-  const { search, classId, status, minAttendance } = req.query;
+  const { search, classId, status, minAttendance, subject } = req.query;
   const filtered = filterStudentsList(studentsData, {
     search: typeof search === "string" ? search : undefined,
     classId: typeof classId === "string" ? classId : undefined,
     status: typeof status === "string" ? status : undefined,
     minAttendance: typeof minAttendance === "string" ? minAttendance : undefined,
+    subject: typeof subject === "string" ? subject : undefined,
   });
   const summary = calculateSummaryStats(filtered);
   res.json(summary);
@@ -515,12 +526,13 @@ app.get("/api/students/at-risk", (req, res) => {
 
 // Export student attendance CSV
 app.get("/api/students/export/csv", (req, res) => {
-  const { search, classId, status, minAttendance } = req.query;
+  const { search, classId, status, minAttendance, subject } = req.query;
   const filtered = filterStudentsList(studentsData, {
     search: typeof search === "string" ? search : undefined,
     classId: typeof classId === "string" ? classId : undefined,
     status: typeof status === "string" ? status : undefined,
     minAttendance: typeof minAttendance === "string" ? minAttendance : undefined,
+    subject: typeof subject === "string" ? subject : undefined,
   });
   const csvContent = generateStudentsCSV(filtered);
   res.setHeader("Content-Type", "text/csv");
