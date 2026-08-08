@@ -142,6 +142,44 @@ describe("Student Filter & CSV Generation Suite", () => {
     assert.equal(res[0].name, "Alice Smith");
   });
 
+  it("should perform multi-field search across name, rollNo, email, subject, and phone", () => {
+    const mockWithSubject: Student[] = [
+      ...mockStudents,
+      {
+        id: "s4",
+        name: "David Miller",
+        rollNo: "104",
+        classId: "cs-3b",
+        className: "Computer Science - 3B",
+        email: "david.m@example.com",
+        phone: "+91 9888844444",
+        attendancePercent: 85,
+        totalClasses: 20,
+        presentDays: 17,
+        absentDays: 3,
+        status: "Present",
+        photo: "photo4.jpg",
+        subject: "Operating Systems",
+      },
+    ];
+
+    const byRoll = filterStudentsList(mockWithSubject, { search: "104" });
+    assert.equal(byRoll.length, 1);
+    assert.equal(byRoll[0].name, "David Miller");
+
+    const byEmail = filterStudentsList(mockWithSubject, { search: "david.m@example.com" });
+    assert.equal(byEmail.length, 1);
+    assert.equal(byEmail[0].name, "David Miller");
+
+    const bySubject = filterStudentsList(mockWithSubject, { search: "Operating Systems" });
+    assert.equal(bySubject.length, 1);
+    assert.equal(bySubject[0].name, "David Miller");
+
+    const bySubjectFilter = filterStudentsList(mockWithSubject, { subject: "Operating Systems" });
+    assert.equal(bySubjectFilter.length, 1);
+    assert.equal(bySubjectFilter[0].name, "David Miller");
+  });
+
   it("should generate valid CSV header and rows from student list", () => {
     const csv = generateStudentsCSV(mockStudents);
     assert.ok(csv.includes("Roll No,Name,Class,Email,Phone,Attendance %,Present Days,Absent Days,Status"));
