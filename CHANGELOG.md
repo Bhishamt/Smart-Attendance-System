@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.7] - 2026-08-08
+
+### Added
+- Multi-field student search and subject query filtering support in `filterStudentsList` utility and API endpoints (`GET /api/students`, `GET /api/students/summary`, `GET /api/students/export/csv`).
+- Enhanced search input supporting querying across student name, roll number, email address, subject, and contact phone number.
+- Dedicated "All Subjects" dropdown filter control in frontend `StudentsView`.
+- Unit test suite expansion in `server.test.ts` for multi-field search and subject filtering.
+
 ## [1.0.6] - 2026-08-07
 
 ### Added
