@@ -366,9 +366,38 @@ export function generateStudentsCSV(students: Student[]): string {
   return [headers.join(","), ...rows].join("\n");
 }
 
+export function sortStudentsList(
+  students: Student[],
+  sortBy: string = "name",
+  sortOrder: string = "asc"
+): Student[] {
+  const sorted = [...students];
+  const orderMultiplier = sortOrder.toLowerCase() === "desc" ? -1 : 1;
+
+  return sorted.sort((a, b) => {
+    switch (sortBy) {
+      case "rollNo": {
+        const numA = parseInt(a.rollNo, 10);
+        const numB = parseInt(b.rollNo, 10);
+        if (!isNaN(numA) && !isNaN(numB)) {
+          return (numA - numB) * orderMultiplier;
+        }
+        return a.rollNo.localeCompare(b.rollNo) * orderMultiplier;
+      }
+      case "attendancePercent":
+        return (a.attendancePercent - b.attendancePercent) * orderMultiplier;
+      case "presentDays":
+        return (a.presentDays - b.presentDays) * orderMultiplier;
+      case "name":
+      default:
+        return a.name.localeCompare(b.name) * orderMultiplier;
+    }
+  });
+}
+
 export function filterStudentsList(
   students: Student[],
-  query: { search?: string; classId?: string; status?: string; minAttendance?: string; subject?: string }
+  query: { search?: string; classId?: string; status?: string; minAttendance?: string; subject?: string; sortBy?: string; sortOrder?: string }
 ): Student[] {
   let filtered = [...students];
   if (query.classId && query.classId !== "all") {
@@ -397,6 +426,9 @@ export function filterStudentsList(
         (s.subject && s.subject.toLowerCase().includes(q)) ||
         (s.phone && s.phone.includes(q))
     );
+  }
+  if (query.sortBy) {
+    filtered = sortStudentsList(filtered, query.sortBy, query.sortOrder);
   }
   return filtered;
 }
@@ -447,7 +479,7 @@ export function calculateSummaryStats(students: Student[]): StudentSummaryStats 
 export type RiskLevel = "Critical" | "High" | "Moderate" | "Good";
 
 export function calculateRiskLevel(attendancePercent: number): RiskLevel {
-  if (attendancePercent < 60) return "Critical";
+  if (attendancePercent < 50) return "Critical";
   if (attendancePercent < 75) return "High";
   if (attendancePercent < 85) return "Moderate";
   return "Good";
@@ -490,13 +522,15 @@ export function getAtRiskStudents(students: Student[], threshold: number = 75): 
 
 // Get all students
 app.get("/api/students", (req, res) => {
-  const { search, classId, status, minAttendance, subject } = req.query;
+  const { search, classId, status, minAttendance, subject, sortBy, sortOrder } = req.query;
   const filtered = filterStudentsList(studentsData, {
     search: typeof search === "string" ? search : undefined,
     classId: typeof classId === "string" ? classId : undefined,
     status: typeof status === "string" ? status : undefined,
     minAttendance: typeof minAttendance === "string" ? minAttendance : undefined,
     subject: typeof subject === "string" ? subject : undefined,
+    sortBy: typeof sortBy === "string" ? sortBy : undefined,
+    sortOrder: typeof sortOrder === "string" ? sortOrder : undefined,
   });
   res.json(filtered);
 });
