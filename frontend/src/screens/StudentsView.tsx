@@ -25,6 +25,7 @@ import {
   BarChart3,
   XCircle,
   AlertCircle,
+  ArrowUpDown,
 } from "lucide-react";
 import { Student, ClassInfo } from "../types";
 import { exportStudentsToCSV } from "../utils/csvExport";
@@ -53,6 +54,8 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [selectedSubject, setSelectedSubject] = useState("all");
   const [showAtRiskOnly, setShowAtRiskOnly] = useState(false);
+  const [sortBy, setSortBy] = useState<"name" | "rollNo" | "attendancePercent" | "presentDays">("name");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
 
   const availableSubjects = Array.from(
@@ -75,6 +78,27 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
       (s.subject && s.subject.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (s.phone && s.phone.includes(searchQuery));
     return matchesClass && matchesStatus && matchesSubject && matchesRisk && matchesSearch;
+  });
+
+  const sortedFilteredStudents = [...filteredStudents].sort((a, b) => {
+    const orderMultiplier = sortOrder === "desc" ? -1 : 1;
+    switch (sortBy) {
+      case "rollNo": {
+        const numA = parseInt(a.rollNo, 10);
+        const numB = parseInt(b.rollNo, 10);
+        if (!isNaN(numA) && !isNaN(numB)) {
+          return (numA - numB) * orderMultiplier;
+        }
+        return a.rollNo.localeCompare(b.rollNo) * orderMultiplier;
+      }
+      case "attendancePercent":
+        return (a.attendancePercent - b.attendancePercent) * orderMultiplier;
+      case "presentDays":
+        return (a.presentDays - b.presentDays) * orderMultiplier;
+      case "name":
+      default:
+        return a.name.localeCompare(b.name) * orderMultiplier;
+    }
   });
 
   const presentCount = filteredStudents.filter((s) => s.status === "Present").length;
@@ -284,6 +308,34 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
           <Filter className="w-4 h-4 text-slate-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
         </div>
 
+        {/* Sort By Selector */}
+        <div className="sm:col-span-2 relative">
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as any)}
+            className="w-full bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl py-3 pl-4 pr-10 text-sm font-bold text-slate-700 dark:text-slate-300 shadow-sm focus:ring-2 focus:ring-indigo-500 transition-all appearance-none cursor-pointer"
+          >
+            <option value="name">Sort by Name</option>
+            <option value="rollNo">Sort by Roll No</option>
+            <option value="attendancePercent">Sort by Attendance %</option>
+            <option value="presentDays">Sort by Present Days</option>
+          </select>
+          <ArrowUpDown className="w-4 h-4 text-slate-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+        </div>
+
+        {/* Sort Order Toggle */}
+        <div className="sm:col-span-1.5 flex items-center">
+          <button
+            type="button"
+            onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+            className="w-full py-3 px-3 rounded-2xl font-bold text-xs flex items-center justify-center gap-1.5 border transition-all bg-white dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-50"
+            title={`Toggle sort direction (currently ${sortOrder === "asc" ? "Ascending" : "Descending"})`}
+          >
+            <ArrowUpDown className="w-4 h-4 shrink-0" />
+            <span>{sortOrder === "asc" ? "Asc" : "Desc"}</span>
+          </button>
+        </div>
+
         {/* At Risk Quick Filter */}
         <div className="sm:col-span-1.5 flex items-center">
           <button
@@ -370,7 +422,7 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
       )}
 
       {/* Grid of Students */}
-      {filteredStudents.length === 0 ? (
+      {sortedFilteredStudents.length === 0 ? (
         <div className="glass-card rounded-3xl p-12 text-center space-y-4">
           <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-slate-800 mx-auto flex items-center justify-center text-indigo-600">
             <Search className="w-8 h-8" />
@@ -392,7 +444,7 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredStudents.map((student) => {
+          {sortedFilteredStudents.map((student) => {
             const isHigh = student.attendancePercent >= 85;
             const isMed = student.attendancePercent >= 75 && student.attendancePercent < 85;
             const isSelected = selectedStudentIds.includes(student.id);
