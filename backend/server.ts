@@ -479,7 +479,7 @@ export function calculateSummaryStats(students: Student[]): StudentSummaryStats 
 export type RiskLevel = "Critical" | "High" | "Moderate" | "Good";
 
 export function calculateRiskLevel(attendancePercent: number): RiskLevel {
-  if (attendancePercent < 50) return "Critical";
+  if (attendancePercent < 60) return "Critical";
   if (attendancePercent < 75) return "High";
   if (attendancePercent < 85) return "Moderate";
   return "Good";
