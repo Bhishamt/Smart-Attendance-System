@@ -11,6 +11,7 @@ import {
   calculateSummaryStats,
   calculateRiskLevel,
   getAtRiskStudents,
+  sortStudentsList,
   Student,
 } from "./server.ts";
 
@@ -452,6 +453,92 @@ describe("Attendance Risk Assessment Suite", () => {
 
     const customReport = getAtRiskStudents([], -10);
     assert.equal(customReport.threshold, 75);
+  });
+});
+
+describe("Student Sorting & Ordering Suite", () => {
+  const mockStudents: Student[] = [
+    {
+      id: "s1",
+      name: "Charlie Brown",
+      rollNo: "105",
+      classId: "cs-3b",
+      className: "CS - 3B",
+      email: "charlie@example.com",
+      phone: "+91 1111111111",
+      attendancePercent: 65,
+      totalClasses: 20,
+      presentDays: 13,
+      absentDays: 7,
+      status: "Absent",
+      photo: "",
+    },
+    {
+      id: "s2",
+      name: "Alice Smith",
+      rollNo: "101",
+      classId: "cs-3b",
+      className: "CS - 3B",
+      email: "alice@example.com",
+      phone: "+91 2222222222",
+      attendancePercent: 95,
+      totalClasses: 20,
+      presentDays: 19,
+      absentDays: 1,
+      status: "Present",
+      photo: "",
+    },
+    {
+      id: "s3",
+      name: "Bob Jones",
+      rollNo: "102",
+      classId: "cs-3b",
+      className: "CS - 3B",
+      email: "bob@example.com",
+      phone: "+91 3333333333",
+      attendancePercent: 80,
+      totalClasses: 20,
+      presentDays: 16,
+      absentDays: 4,
+      status: "Present",
+      photo: "",
+    },
+  ];
+
+  it("should sort students by name alphabetically (asc and desc)", () => {
+    const asc = sortStudentsList(mockStudents, "name", "asc");
+    assert.equal(asc[0].name, "Alice Smith");
+    assert.equal(asc[1].name, "Bob Jones");
+    assert.equal(asc[2].name, "Charlie Brown");
+
+    const desc = sortStudentsList(mockStudents, "name", "desc");
+    assert.equal(desc[0].name, "Charlie Brown");
+    assert.equal(desc[1].name, "Bob Jones");
+    assert.equal(desc[2].name, "Alice Smith");
+  });
+
+  it("should sort students by roll number numerically", () => {
+    const asc = sortStudentsList(mockStudents, "rollNo", "asc");
+    assert.equal(asc[0].rollNo, "101");
+    assert.equal(asc[1].rollNo, "102");
+    assert.equal(asc[2].rollNo, "105");
+  });
+
+  it("should sort students by attendance percentage and present days", () => {
+    const desc = sortStudentsList(mockStudents, "attendancePercent", "desc");
+    assert.equal(desc[0].attendancePercent, 95);
+    assert.equal(desc[1].attendancePercent, 80);
+    assert.equal(desc[2].attendancePercent, 65);
+
+    const ascPresent = sortStudentsList(mockStudents, "presentDays", "asc");
+    assert.equal(ascPresent[0].presentDays, 13);
+    assert.equal(ascPresent[2].presentDays, 19);
+  });
+
+  it("should apply sorting through filterStudentsList parameters", () => {
+    const sorted = filterStudentsList(mockStudents, { sortBy: "attendancePercent", sortOrder: "desc" });
+    assert.equal(sorted[0].name, "Alice Smith");
+    assert.equal(sorted[2].name, "Charlie Brown");
   });
 });
 
