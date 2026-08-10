@@ -433,6 +433,42 @@ export function filterStudentsList(
   return filtered;
 }
 
+export interface PaginationResult<T> {
+  data: T[];
+  page: number;
+  limit: number;
+  totalItems: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+}
+
+export function paginateStudentsList(
+  students: Student[],
+  page: number = 1,
+  limit: number = 10
+): PaginationResult<Student> {
+  const safePage = Math.max(1, Math.floor(page) || 1);
+  const safeLimit = Math.max(1, Math.floor(limit) || 10);
+  const totalItems = students.length;
+  const totalPages = Math.ceil(totalItems / safeLimit) || 1;
+  const currentPage = Math.min(safePage, totalPages);
+
+  const startIndex = (currentPage - 1) * safeLimit;
+  const endIndex = startIndex + safeLimit;
+  const data = students.slice(startIndex, endIndex);
+
+  return {
+    data,
+    page: currentPage,
+    limit: safeLimit,
+    totalItems,
+    totalPages,
+    hasNextPage: currentPage < totalPages,
+    hasPrevPage: currentPage > 1,
+  };
+}
+
 export interface StudentSummaryStats {
   totalStudents: number;
   avgAttendancePercent: number;
@@ -522,7 +558,7 @@ export function getAtRiskStudents(students: Student[], threshold: number = 75): 
 
 // Get all students
 app.get("/api/students", (req, res) => {
-  const { search, classId, status, minAttendance, subject, sortBy, sortOrder } = req.query;
+  const { search, classId, status, minAttendance, subject, sortBy, sortOrder, page, limit } = req.query;
   const filtered = filterStudentsList(studentsData, {
     search: typeof search === "string" ? search : undefined,
     classId: typeof classId === "string" ? classId : undefined,
@@ -532,6 +568,14 @@ app.get("/api/students", (req, res) => {
     sortBy: typeof sortBy === "string" ? sortBy : undefined,
     sortOrder: typeof sortOrder === "string" ? sortOrder : undefined,
   });
+
+  if (page !== undefined || limit !== undefined) {
+    const pageNum = typeof page === "string" ? parseInt(page, 10) : 1;
+    const limitNum = typeof limit === "string" ? parseInt(limit, 10) : 10;
+    const paginated = paginateStudentsList(filtered, pageNum, limitNum);
+    return res.json(paginated);
+  }
+
   res.json(filtered);
 });
 
