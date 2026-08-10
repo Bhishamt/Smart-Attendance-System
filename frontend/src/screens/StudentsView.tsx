@@ -9,6 +9,7 @@ import {
   Plus,
   Filter,
   ChevronRight,
+  ChevronLeft,
   User,
   Mail,
   Phone,
@@ -57,6 +58,8 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
   const [sortBy, setSortBy] = useState<"name" | "rollNo" | "attendancePercent" | "presentDays">("name");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState<number | "all">(6);
 
   const availableSubjects = Array.from(
     new Set(students.map((s) => s.subject).filter(Boolean) as string[])
@@ -100,6 +103,18 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
         return a.name.localeCompare(b.name) * orderMultiplier;
     }
   });
+
+  const totalItems = sortedFilteredStudents.length;
+  const effectiveLimit = itemsPerPage === "all" ? Math.max(1, totalItems) : itemsPerPage;
+  const totalPages = Math.max(1, Math.ceil(totalItems / effectiveLimit));
+  const safeCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
+
+  const startIndex = totalItems === 0 ? 0 : (safeCurrentPage - 1) * effectiveLimit;
+  const endIndex = itemsPerPage === "all" ? totalItems : Math.min(startIndex + effectiveLimit, totalItems);
+  const paginatedStudents = sortedFilteredStudents.slice(
+    startIndex,
+    itemsPerPage === "all" ? undefined : startIndex + effectiveLimit
+  );
 
   const presentCount = filteredStudents.filter((s) => s.status === "Present").length;
   const absentCount = filteredStudents.filter((s) => s.status === "Absent").length;
@@ -443,145 +458,217 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {sortedFilteredStudents.map((student) => {
-            const isHigh = student.attendancePercent >= 85;
-            const isMed = student.attendancePercent >= 75 && student.attendancePercent < 85;
-            const isSelected = selectedStudentIds.includes(student.id);
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {paginatedStudents.map((student) => {
+              const isHigh = student.attendancePercent >= 85;
+              const isMed = student.attendancePercent >= 75 && student.attendancePercent < 85;
+              const isSelected = selectedStudentIds.includes(student.id);
 
-            return (
-              <div
-                key={student.id}
-                onClick={() => onSelectStudent(student.id)}
-                className={`glass-card rounded-3xl p-5 hover:shadow-lg transition-all cursor-pointer group border flex flex-col justify-between relative ${
-                  isSelected
-                    ? "border-indigo-500 ring-2 ring-indigo-500/30 bg-indigo-50/20 dark:bg-indigo-950/20"
-                    : "border-slate-100 dark:border-slate-800"
-                }`}
-              >
-                <div>
-                  <div className="flex items-start justify-between gap-3 mb-4">
-                    <div className="flex items-center gap-3.5">
-                      <button
-                        type="button"
-                        onClick={(e) => toggleSelectStudent(student.id, e)}
-                        className="text-indigo-600 dark:text-indigo-400 hover:scale-110 transition-transform p-0.5"
-                        title={isSelected ? "Deselect student" : "Select student"}
-                      >
-                        {isSelected ? (
-                          <CheckSquare className="w-5 h-5 fill-indigo-600 text-white dark:fill-indigo-500 dark:text-slate-900" />
-                        ) : (
-                          <Square className="w-5 h-5 text-slate-300 dark:text-slate-600 hover:text-indigo-500" />
-                        )}
-                      </button>
+              return (
+                <div
+                  key={student.id}
+                  onClick={() => onSelectStudent(student.id)}
+                  className={`glass-card rounded-3xl p-5 hover:shadow-lg transition-all cursor-pointer group border flex flex-col justify-between relative ${
+                    isSelected
+                      ? "border-indigo-500 ring-2 ring-indigo-500/30 bg-indigo-50/20 dark:bg-indigo-950/20"
+                      : "border-slate-100 dark:border-slate-800"
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-start justify-between gap-3 mb-4">
+                      <div className="flex items-center gap-3.5">
+                        <button
+                          type="button"
+                          onClick={(e) => toggleSelectStudent(student.id, e)}
+                          className="text-indigo-600 dark:text-indigo-400 hover:scale-110 transition-transform p-0.5"
+                          title={isSelected ? "Deselect student" : "Select student"}
+                        >
+                          {isSelected ? (
+                            <CheckSquare className="w-5 h-5 fill-indigo-600 text-white dark:fill-indigo-500 dark:text-slate-900" />
+                          ) : (
+                            <Square className="w-5 h-5 text-slate-300 dark:text-slate-600 hover:text-indigo-500" />
+                          )}
+                        </button>
 
-                      <div className="relative shrink-0">
-                        <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-indigo-500/20 shadow-sm group-hover:scale-105 transition-transform">
-                          <img src={student.photo} alt={student.name} className="w-full h-full object-cover" />
+                        <div className="relative shrink-0">
+                          <div className="w-14 h-14 rounded-2xl overflow-hidden border-2 border-indigo-500/20 shadow-sm group-hover:scale-105 transition-transform">
+                            <img src={student.photo} alt={student.name} className="w-full h-full object-cover" />
+                          </div>
+                          <span
+                            className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-slate-800 ${
+                              student.status === "Present"
+                                ? "bg-emerald-500"
+                                : student.status === "Absent"
+                                ? "bg-red-500"
+                                : "bg-amber-500"
+                            }`}
+                            title={`Status: ${student.status}`}
+                          />
                         </div>
-                        <span
-                          className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-slate-800 ${
-                            student.status === "Present"
-                              ? "bg-emerald-500"
-                              : student.status === "Absent"
-                              ? "bg-red-500"
-                              : "bg-amber-500"
-                          }`}
-                          title={`Status: ${student.status}`}
-                        />
+                        <div>
+                          <h4 className="font-bold text-base text-slate-800 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                            {student.name}
+                          </h4>
+                          <span className="inline-block text-[10px] font-bold bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 px-2.5 py-0.5 rounded-full mt-1">
+                            Roll No: {student.rollNo}
+                          </span>
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="font-bold text-base text-slate-800 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                          {student.name}
-                        </h4>
-                        <span className="inline-block text-[10px] font-bold bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 px-2.5 py-0.5 rounded-full mt-1">
-                          Roll No: {student.rollNo}
+
+                      {/* Attendance Percentage & Risk Level Badge */}
+                      <div className="flex flex-col items-end gap-1 shrink-0">
+                        <span
+                          className={`inline-block px-2.5 py-1 rounded-full text-xs font-extrabold ${
+                            isHigh
+                              ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
+                              : isMed
+                              ? "bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
+                              : "bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-300 border border-red-200 dark:border-red-800 animate-pulse"
+                          }`}
+                        >
+                          {student.attendancePercent}%
+                        </span>
+                        <span
+                          className={`inline-block text-[9px] font-extrabold px-2 py-0.5 rounded-md ${
+                            student.attendancePercent < 60
+                              ? "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300"
+                              : student.attendancePercent < 75
+                              ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+                              : student.attendancePercent < 85
+                              ? "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300"
+                              : "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                          }`}
+                        >
+                          {student.attendancePercent < 60
+                            ? "Critical Risk"
+                            : student.attendancePercent < 75
+                            ? "High Risk"
+                            : student.attendancePercent < 85
+                            ? "Moderate"
+                            : "Good"}
                         </span>
                       </div>
+
                     </div>
 
-                    {/* Attendance Percentage & Risk Level Badge */}
-                    <div className="flex flex-col items-end gap-1 shrink-0">
-                      <span
-                        className={`inline-block px-2.5 py-1 rounded-full text-xs font-extrabold ${
-                          isHigh
-                            ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800"
-                            : isMed
-                            ? "bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
-                            : "bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-300 border border-red-200 dark:border-red-800 animate-pulse"
-                        }`}
-                      >
-                        {student.attendancePercent}%
-                      </span>
-                      <span
-                        className={`inline-block text-[9px] font-extrabold px-2 py-0.5 rounded-md ${
-                          student.attendancePercent < 60
-                            ? "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300"
-                            : student.attendancePercent < 75
-                            ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
-                            : student.attendancePercent < 85
-                            ? "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300"
-                            : "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
-                        }`}
-                      >
-                        {student.attendancePercent < 60
-                          ? "Critical Risk"
-                          : student.attendancePercent < 75
-                          ? "High Risk"
-                          : student.attendancePercent < 85
-                          ? "Moderate"
-                          : "Good"}
-                      </span>
+                    {/* Info list */}
+                    <div className="space-y-1.5 text-xs text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800">
+                      <div className="flex items-center gap-2 truncate">
+                        <School className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <span className="truncate font-medium">{student.className}</span>
+                      </div>
+                      {student.subject && (
+                        <div className="flex items-center gap-2 truncate text-indigo-600 dark:text-indigo-400 font-semibold">
+                          <BookOpen className="w-3.5 h-3.5 shrink-0" />
+                          <span className="truncate">{student.subject}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2 truncate">
+                        <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <span className="truncate font-mono">{student.phone}</span>
+                      </div>
+                      {student.email && (
+                        <div className="flex items-center gap-2 truncate">
+                          <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <span className="truncate">{student.email}</span>
+                        </div>
+                      )}
+                      {student.biometricRegistered && (
+                        <div className="flex items-center gap-1.5 pt-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                          <ScanFace className="w-3.5 h-3.5" />
+                          <span>Face Recognition Biometric ID</span>
+                        </div>
+                      )}
                     </div>
-
                   </div>
 
-                  {/* Info list */}
-                  <div className="space-y-1.5 text-xs text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800">
-                    <div className="flex items-center gap-2 truncate">
-                      <School className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                      <span className="truncate font-medium">{student.className}</span>
-                    </div>
-                    {student.subject && (
-                      <div className="flex items-center gap-2 truncate text-indigo-600 dark:text-indigo-400 font-semibold">
-                        <BookOpen className="w-3.5 h-3.5 shrink-0" />
-                        <span className="truncate">{student.subject}</span>
-                      </div>
-                    )}
-                    <div className="flex items-center gap-2 truncate">
-                      <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                      <span className="truncate font-mono">{student.phone}</span>
-                    </div>
-                    {student.email && (
-                      <div className="flex items-center gap-2 truncate">
-                        <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                        <span className="truncate">{student.email}</span>
-                      </div>
-                    )}
-                    {student.biometricRegistered && (
-                      <div className="flex items-center gap-1.5 pt-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
-                        <ScanFace className="w-3.5 h-3.5" />
-                        <span>Face Recognition Biometric ID</span>
-                      </div>
-                    )}
+                  {/* Footer Action */}
+                  <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs font-bold text-indigo-600 dark:text-indigo-400">
+                    <span className="flex items-center gap-1">
+                      <Award className="w-3.5 h-3.5 text-indigo-500" />
+                      {student.presentDays} Days Present
+                    </span>
+                    <span className="flex items-center gap-0.5 group-hover:translate-x-1 transition-transform">
+                      <span>View Profile</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </span>
                   </div>
                 </div>
+              );
+            })}
+          </div>
 
-                {/* Footer Action */}
-                <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs font-bold text-indigo-600 dark:text-indigo-400">
-                  <span className="flex items-center gap-1">
-                    <Award className="w-3.5 h-3.5 text-indigo-500" />
-                    {student.presentDays} Days Present
-                  </span>
-                  <span className="flex items-center gap-0.5 group-hover:translate-x-1 transition-transform">
-                    <span>View Profile</span>
-                    <ChevronRight className="w-4 h-4" />
-                  </span>
+          {/* Interactive Pagination Bar */}
+          {totalItems > 0 && (
+            <div className="mt-6 glass-card rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 border border-slate-200/60 dark:border-slate-800">
+              <div className="flex items-center gap-3 text-xs font-medium text-slate-600 dark:text-slate-400">
+                <span>
+                  Showing <strong className="text-slate-800 dark:text-white font-bold">{startIndex + 1}</strong> to{" "}
+                  <strong className="text-slate-800 dark:text-white font-bold">{endIndex}</strong> of{" "}
+                  <strong className="text-slate-800 dark:text-white font-bold">{totalItems}</strong> students
+                </span>
+
+                <div className="flex items-center gap-1.5 ml-2 border-l border-slate-200 dark:border-slate-700 pl-3">
+                  <span className="text-slate-500">Per page:</span>
+                  <select
+                    value={itemsPerPage}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setItemsPerPage(val === "all" ? "all" : parseInt(val, 10));
+                      setCurrentPage(1);
+                    }}
+                    className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold px-2 py-1 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value={6}>6</option>
+                    <option value={12}>12</option>
+                    <option value={24}>24</option>
+                    <option value="all">All</option>
+                  </select>
                 </div>
               </div>
-            );
-          })}
-        </div>
+
+              {itemsPerPage !== "all" && totalPages > 1 && (
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    disabled={safeCurrentPage <= 1}
+                    onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                    className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    title="Previous Page"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                    <button
+                      key={pageNum}
+                      type="button"
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`w-7 h-7 rounded-lg text-xs font-bold transition-colors ${
+                        pageNum === safeCurrentPage
+                          ? "bg-indigo-600 text-white shadow-sm"
+                          : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  ))}
+
+                  <button
+                    type="button"
+                    disabled={safeCurrentPage >= totalPages}
+                    onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                    className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    title="Next Page"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
