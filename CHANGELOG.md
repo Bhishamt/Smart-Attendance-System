@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.9] - 2026-08-10
+
+### Added
+- Student list pagination utility (`paginateStudentsList`) and query parameter support (`page`, `limit`) in backend endpoint (`GET /api/students`).
+- Interactive pagination bar in frontend `StudentsView` with item count indicators ("Showing X-Y of Z"), per-page size selector dropdown (6, 12, 24, All), and page navigation buttons.
+- Unit test suite expansion (`Student Pagination & Page Metadata Suite`) in `server.test.ts` covering page slicing, boundary metadata, limits, and out-of-bounds fallbacks.
+
 ## [1.0.8] - 2026-08-09
 
 ### Added
