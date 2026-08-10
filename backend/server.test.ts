@@ -12,6 +12,7 @@ import {
   calculateRiskLevel,
   getAtRiskStudents,
   sortStudentsList,
+  paginateStudentsList,
   Student,
 } from "./server.ts";
 
@@ -539,6 +540,65 @@ describe("Student Sorting & Ordering Suite", () => {
     const sorted = filterStudentsList(mockStudents, { sortBy: "attendancePercent", sortOrder: "desc" });
     assert.equal(sorted[0].name, "Alice Smith");
     assert.equal(sorted[2].name, "Charlie Brown");
+  });
+});
+
+describe("Student Pagination & Page Metadata Suite", () => {
+  const sampleStudents: Student[] = Array.from({ length: 15 }, (_, i) => ({
+    id: `std-${i + 1}`,
+    name: `Student ${i + 1}`,
+    rollNo: `${100 + i + 1}`,
+    classId: "cs-3b",
+    className: "Computer Science - 3B",
+    email: `student${i + 1}@example.com`,
+    phone: "+91 9000000000",
+    attendancePercent: 75 + (i % 20),
+    totalClasses: 30,
+    presentDays: 20,
+    absentDays: 10,
+    status: "Present",
+    photo: "",
+  }));
+
+  it("should divide student list into correct page slices", () => {
+    const page1 = paginateStudentsList(sampleStudents, 1, 5);
+    assert.equal(page1.data.length, 5);
+    assert.equal(page1.data[0].id, "std-1");
+    assert.equal(page1.data[4].id, "std-5");
+    assert.equal(page1.page, 1);
+    assert.equal(page1.limit, 5);
+    assert.equal(page1.totalItems, 15);
+    assert.equal(page1.totalPages, 3);
+    assert.equal(page1.hasNextPage, true);
+    assert.equal(page1.hasPrevPage, false);
+
+    const page2 = paginateStudentsList(sampleStudents, 2, 5);
+    assert.equal(page2.data.length, 5);
+    assert.equal(page2.data[0].id, "std-6");
+    assert.equal(page2.hasNextPage, true);
+    assert.equal(page2.hasPrevPage, true);
+
+    const page3 = paginateStudentsList(sampleStudents, 3, 5);
+    assert.equal(page3.data.length, 5);
+    assert.equal(page3.data[4].id, "std-15");
+    assert.equal(page3.hasNextPage, false);
+    assert.equal(page3.hasPrevPage, true);
+  });
+
+  it("should handle out-of-bounds page numbers gracefully", () => {
+    const pageNegative = paginateStudentsList(sampleStudents, -5, 5);
+    assert.equal(pageNegative.page, 1);
+
+    const pageOverflow = paginateStudentsList(sampleStudents, 999, 5);
+    assert.equal(pageOverflow.page, 3);
+  });
+
+  it("should default page to 1 and limit to 10 when not specified", () => {
+    const defaultPage = paginateStudentsList(sampleStudents);
+    assert.equal(defaultPage.page, 1);
+    assert.equal(defaultPage.limit, 10);
+    assert.equal(defaultPage.data.length, 10);
+    assert.equal(defaultPage.totalPages, 2);
   });
 });
 
