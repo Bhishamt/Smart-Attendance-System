@@ -13,6 +13,7 @@ import {
   getAtRiskStudents,
   sortStudentsList,
   paginateStudentsList,
+  simulateSocialAuth,
   Student,
 } from "./server.ts";
 
@@ -601,4 +602,28 @@ describe("Student Pagination & Page Metadata Suite", () => {
     assert.equal(defaultPage.totalPages, 2);
   });
 });
+
+describe("Social Auth Simulation Suite", () => {
+  it("should generate simulated social user payload with default provider fallback", () => {
+    const user = simulateSocialAuth();
+    assert.equal(user.provider, "google");
+    assert.equal(user.email, "admin@google.com");
+    assert.equal(user.role, "Admin");
+    assert.equal(user.name, "Google User");
+  });
+
+  it("should build correct user payload for specified social providers", () => {
+    const appleUser = simulateSocialAuth("apple", "admin@apple.com", "Apple User", "Super Admin");
+    assert.equal(appleUser.provider, "apple");
+    assert.equal(appleUser.email, "admin@apple.com");
+    assert.equal(appleUser.name, "Apple User");
+    assert.equal(appleUser.role, "Super Admin");
+
+    const linkedinUser = simulateSocialAuth("linkedin");
+    assert.equal(linkedinUser.provider, "linkedin");
+    assert.equal(linkedinUser.email, "admin@linkedin.com");
+    assert.equal(linkedinUser.name, "Linkedin User");
+  });
+});
+
 
