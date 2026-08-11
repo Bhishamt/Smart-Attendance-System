@@ -998,6 +998,53 @@ app.get("/api/auth/cloud/simulate", (req, res) => {
   res.redirect("/?drive_connected=true");
 });
 
+export interface SocialAuthResult {
+  email: string;
+  name: string;
+  role: string;
+  provider: string;
+}
+
+export function simulateSocialAuth(
+  provider?: string,
+  email?: string,
+  name?: string,
+  role?: string
+): SocialAuthResult {
+  const normProvider = (provider || "google").toLowerCase().trim();
+  const defaultEmail = email || `admin@${normProvider}.com`;
+  const defaultName = name || `${normProvider.charAt(0).toUpperCase() + normProvider.slice(1)} User`;
+  const userRole = role || "Admin";
+
+  activitiesData.unshift({
+    id: `act-${Date.now()}`,
+    title: `Social Auth (${normProvider})`,
+    subtitle: `${defaultEmail} authenticated via ${normProvider}`,
+    timeAgo: "Just now",
+    type: "login",
+    timestamp: new Date().toISOString(),
+  });
+
+  return {
+    email: defaultEmail,
+    name: defaultName,
+    role: userRole,
+    provider: normProvider,
+  };
+}
+
+// Simulated Social Provider Authentication endpoint
+app.get("/api/auth/social/simulate", (req, res) => {
+  const { provider, email, name, role } = req.query;
+  const result = simulateSocialAuth(
+    provider as string,
+    email as string,
+    name as string,
+    role as string
+  );
+  res.json({ success: true, user: result });
+});
+
 // Real OAuth Callback
 app.get("/api/auth/cloud/callback", async (req, res) => {
   const { code } = req.query;
