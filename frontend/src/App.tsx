@@ -25,7 +25,7 @@ import { setupToastListener } from "./utils/toast";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>("splash");
-  const [currentUser, setCurrentUser] = useState<{ email: string; role: string; department?: string } | null>(null);
+  const [currentUser, setCurrentUser] = useState<{ email: string; role: string; department?: string; provider?: string } | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
   const [classes, setClasses] = useState<ClassInfo[]>([]);
   const [activities, setActivities] = useState<AttendanceActivity[]>([]);

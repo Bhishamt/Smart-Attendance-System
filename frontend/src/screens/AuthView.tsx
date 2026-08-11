@@ -222,7 +222,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onLoginSuccess, onCloudAuth 
             />
           </button>
           <button
-            onClick={() => onLoginSuccess("admin@apple.com", "Admin")}
+            onClick={() => onLoginSuccess({ email: "admin@apple.com", name: "Apple User", role: "Admin", provider: "apple" })}
             type="button"
             className="h-12 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm"
             title="Continue with Apple"
@@ -234,7 +234,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onLoginSuccess, onCloudAuth 
             />
           </button>
           <button
-            onClick={() => onLoginSuccess("admin@linkedin.com", "Admin")}
+            onClick={() => onLoginSuccess({ email: "admin@linkedin.com", name: "LinkedIn User", role: "Admin", provider: "linkedin" })}
             type="button"
             className="h-12 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm"
             title="Continue with LinkedIn"
