@@ -76,6 +76,11 @@ Analyze attendance data with AI.
 Initiate Google Drive OAuth flow.
 **Response:** Redirect to Google consent screen.
 
+### GET /api/auth/social/simulate
+Simulate social provider authentication (OAuth interactive demo).
+**Query:** `provider?`, `email?`, `name?`, `role?`
+**Response:** `{ success: boolean, user: { email, name, role, provider } }`
+
 ### POST /api/sync/drive
 Backup data to Google Drive.
 **Body:** `{ code: string }`

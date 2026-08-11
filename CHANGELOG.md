@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-08-11
+
+### Added
+- Social authentication simulation endpoint (`GET /api/auth/social/simulate`) in backend `server.ts` supporting provider parameters (`google`, `apple`, `linkedin`) and user role configuration.
+- Unit test suite (`Social Auth Simulation Suite`) in `server.test.ts` covering provider defaults, fallback roles, and activity log tracking.
+
+### Fixed
+- Resolved argument count type error in frontend `AuthView.tsx` social sign-in buttons by passing structured user objects with provider metadata.
+
 ## [1.0.9] - 2026-08-10
 
 ### Added
