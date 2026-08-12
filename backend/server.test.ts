@@ -14,6 +14,7 @@ import {
   sortStudentsList,
   paginateStudentsList,
   simulateSocialAuth,
+  generateStudentsJSON,
   Student,
 } from "./server.ts";
 
@@ -625,5 +626,43 @@ describe("Social Auth Simulation Suite", () => {
     assert.equal(linkedinUser.name, "Linkedin User");
   });
 });
+
+describe("Student JSON Export & Formatting Suite", () => {
+  const sampleStudents: Student[] = [
+    {
+      id: "json-1",
+      name: "Charlie Brown",
+      rollNo: "301",
+      classId: "cs-3b",
+      className: "Computer Science - 3B",
+      email: "charlie@example.com",
+      phone: "+91 9876543210",
+      attendancePercent: 88,
+      totalClasses: 25,
+      presentDays: 22,
+      absentDays: 3,
+      status: "Present",
+      photo: "photo_c.jpg",
+      biometricRegistered: true,
+    },
+  ];
+
+  it("should format student records into structured JSON string", () => {
+    const jsonStr = generateStudentsJSON(sampleStudents);
+    assert.equal(typeof jsonStr, "string");
+    const parsed = JSON.parse(jsonStr);
+    assert.equal(Array.isArray(parsed), true);
+    assert.equal(parsed.length, 1);
+    assert.equal(parsed[0].id, "json-1");
+    assert.equal(parsed[0].name, "Charlie Brown");
+  });
+
+  it("should format empty student arrays cleanly without error", () => {
+    const emptyJson = generateStudentsJSON([]);
+    assert.equal(emptyJson, "[]");
+    assert.deepEqual(JSON.parse(emptyJson), []);
+  });
+});
+
 
 

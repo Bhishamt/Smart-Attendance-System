@@ -45,6 +45,10 @@ export function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+export function generateStudentsJSON(students: Student[]): string {
+  return JSON.stringify(students, null, 2);
+}
+
 // In-Memory password store (maps email -> hashed password)
 const passwordStore: Record<string, string> = {
   "woorkcollage@gmail.com": hashPassword("admin123"),
@@ -1021,7 +1025,7 @@ export function simulateSocialAuth(
     title: `Social Auth (${normProvider})`,
     subtitle: `${defaultEmail} authenticated via ${normProvider}`,
     timeAgo: "Just now",
-    type: "login",
+    type: "student",
     timestamp: new Date().toISOString(),
   });
 
