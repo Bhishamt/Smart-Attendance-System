@@ -29,7 +29,7 @@ import {
   ArrowUpDown,
 } from "lucide-react";
 import { Student, ClassInfo } from "../types";
-import { exportStudentsToCSV } from "../utils/csvExport";
+import { exportStudentsToCSV, exportStudentsToJSON } from "../utils/dataExport";
 
 interface StudentsViewProps {
   students: Student[];
@@ -168,6 +168,14 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
           >
             <Download className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
             <span>Export CSV</span>
+          </button>
+          <button
+            onClick={() => exportStudentsToJSON(filteredStudents)}
+            className="px-4 py-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-2xl transition-all flex items-center justify-center gap-2 text-sm shrink-0 shadow-sm border border-slate-200 dark:border-slate-700"
+            title="Download JSON Report"
+          >
+            <Download className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+            <span>Export JSON</span>
           </button>
           <button
             onClick={onOpenAddStudent}
