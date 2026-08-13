@@ -15,8 +15,10 @@ import {
   paginateStudentsList,
   simulateSocialAuth,
   generateStudentsJSON,
+  calculateAttendanceStatistics,
   Student,
 } from "./server.ts";
+
 
 describe("Backend Auth & Security Suite", () => {
   it("should generate valid salt:hash format when hashing password", () => {
@@ -663,6 +665,66 @@ describe("Student JSON Export & Formatting Suite", () => {
     assert.deepEqual(JSON.parse(emptyJson), []);
   });
 });
+
+describe("Attendance Statistics Breakdown Suite", () => {
+  const statsMockStudents: Student[] = [
+    {
+      id: "st-1",
+      name: "Student One",
+      rollNo: "501",
+      classId: "cs-3b",
+      className: "Computer Science - 3B",
+      email: "st1@example.com",
+      phone: "+91 9111111111",
+      attendancePercent: 95,
+      totalClasses: 20,
+      presentDays: 19,
+      absentDays: 1,
+      status: "Present",
+      photo: "photo1.jpg",
+      biometricRegistered: true,
+    },
+    {
+      id: "st-2",
+      name: "Student Two",
+      rollNo: "502",
+      classId: "cs-3b",
+      className: "Computer Science - 3B",
+      email: "st2@example.com",
+      phone: "+91 9222222222",
+      attendancePercent: 55,
+      totalClasses: 20,
+      presentDays: 11,
+      absentDays: 9,
+      status: "Absent",
+      photo: "photo2.jpg",
+      biometricRegistered: false,
+    },
+  ];
+
+  it("should compute accurate aggregate statistics for student dataset", () => {
+    const stats = calculateAttendanceStatistics(statsMockStudents);
+    assert.equal(stats.totalStudents, 2);
+    assert.equal(stats.avgAttendancePercent, 75); // (95 + 55) / 2
+    assert.equal(stats.totalPresentDays, 30); // 19 + 11
+    assert.equal(stats.totalAbsentDays, 10); // 1 + 9
+    assert.equal(stats.statusBreakdown.Present, 1);
+    assert.equal(stats.statusBreakdown.Absent, 1);
+    assert.equal(stats.riskBreakdown.Good, 1); // 95%
+    assert.equal(stats.riskBreakdown.Critical, 1); // 55%
+    assert.equal(stats.biometricCoveragePercent, 50); // 1 out of 2
+  });
+
+  it("should return zeroed statistics safely for empty dataset", () => {
+    const emptyStats = calculateAttendanceStatistics([]);
+    assert.equal(emptyStats.totalStudents, 0);
+    assert.equal(emptyStats.avgAttendancePercent, 0);
+    assert.equal(emptyStats.biometricCoveragePercent, 0);
+    assert.equal(emptyStats.statusBreakdown.Present, 0);
+    assert.equal(emptyStats.riskBreakdown.Critical, 0);
+  });
+});
+
 
 
 
