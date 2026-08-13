@@ -559,6 +559,73 @@ export function getAtRiskStudents(students: Student[], threshold: number = 75): 
   };
 }
 
+export interface AttendanceStatistics {
+  totalStudents: number;
+  avgAttendancePercent: number;
+  totalPresentDays: number;
+  totalAbsentDays: number;
+  statusBreakdown: {
+    Present: number;
+    Absent: number;
+    Late: number;
+    Medical: number;
+  };
+  riskBreakdown: {
+    Critical: number;
+    High: number;
+    Moderate: number;
+    Good: number;
+  };
+  biometricCoveragePercent: number;
+}
+
+export function calculateAttendanceStatistics(students: Student[]): AttendanceStatistics {
+  const total = students.length;
+  if (total === 0) {
+    return {
+      totalStudents: 0,
+      avgAttendancePercent: 0,
+      totalPresentDays: 0,
+      totalAbsentDays: 0,
+      statusBreakdown: { Present: 0, Absent: 0, Late: 0, Medical: 0 },
+      riskBreakdown: { Critical: 0, High: 0, Moderate: 0, Good: 0 },
+      biometricCoveragePercent: 0,
+    };
+  }
+
+  const sumPercent = students.reduce((acc, s) => acc + (s.attendancePercent || 0), 0);
+  const totalPresentDays = students.reduce((acc, s) => acc + (s.presentDays || 0), 0);
+  const totalAbsentDays = students.reduce((acc, s) => acc + (s.absentDays || 0), 0);
+
+  const statusBreakdown = {
+    Present: students.filter((s) => s.status === "Present").length,
+    Absent: students.filter((s) => s.status === "Absent").length,
+    Late: students.filter((s) => s.status === "Late").length,
+    Medical: students.filter((s) => s.status === "Medical").length,
+  };
+
+  const riskBreakdown = {
+    Critical: students.filter((s) => calculateRiskLevel(s.attendancePercent) === "Critical").length,
+    High: students.filter((s) => calculateRiskLevel(s.attendancePercent) === "High").length,
+    Moderate: students.filter((s) => calculateRiskLevel(s.attendancePercent) === "Moderate").length,
+    Good: students.filter((s) => calculateRiskLevel(s.attendancePercent) === "Good").length,
+  };
+
+  const biometricRegisteredCount = students.filter((s) => s.biometricRegistered).length;
+  const biometricCoveragePercent = Math.round((biometricRegisteredCount / total) * 100);
+
+  return {
+    totalStudents: total,
+    avgAttendancePercent: Math.round(sumPercent / total),
+    totalPresentDays,
+    totalAbsentDays,
+    statusBreakdown,
+    riskBreakdown,
+    biometricCoveragePercent,
+  };
+}
+
+
 
 // Get all students
 app.get("/api/students", (req, res) => {
@@ -596,6 +663,21 @@ app.get("/api/students/summary", (req, res) => {
   const summary = calculateSummaryStats(filtered);
   res.json(summary);
 });
+
+// Get comprehensive attendance statistics breakdown
+app.get("/api/students/stats/breakdown", (req, res) => {
+  const { search, classId, status, minAttendance, subject } = req.query;
+  const filtered = filterStudentsList(studentsData, {
+    search: typeof search === "string" ? search : undefined,
+    classId: typeof classId === "string" ? classId : undefined,
+    status: typeof status === "string" ? status : undefined,
+    minAttendance: typeof minAttendance === "string" ? minAttendance : undefined,
+    subject: typeof subject === "string" ? subject : undefined,
+  });
+  const stats = calculateAttendanceStatistics(filtered);
+  res.json(stats);
+});
+
 
 // Get at-risk students with low attendance
 app.get("/api/students/at-risk", (req, res) => {
