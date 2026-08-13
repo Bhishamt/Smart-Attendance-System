@@ -5,7 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-08-13
+
+### Added
+- Attendance statistics breakdown utility (`calculateAttendanceStatistics`) and API endpoint (`GET /api/students/stats/breakdown`) in `backend/server.ts` delivering total counts, average attendance percentages, present/absent days totals, status counts, risk breakdowns, and biometric registration coverage.
+- Printable HTML attendance report utility (`generatePrintableAttendanceReport`, `triggerReportPrint`) in `frontend/src/utils/printReport.ts`.
+- Interactive "Print Report" action toolbar button in `frontend/src/screens/StudentsView.tsx`.
+- Dedicated unit test suite (`Attendance Statistics Breakdown Suite`) in `backend/server.test.ts` covering aggregate statistics, edge cases, and zeroed empty datasets.
+- Frontend print report unit test suite (`frontend/src/utils/printReport.test.ts`) validating HTML document structure, title headers, entity escaping, and empty dataset handling.
+
 ## [1.2.0] - 2026-08-12
+
 
 ### Added
 - Data export utilities (`exportStudentsToJSON`, `formatStudentsJSON`, `generateStudentsJSON`) in `frontend/src/utils/dataExport.ts` and `backend/server.ts` for structured JSON data downloads.

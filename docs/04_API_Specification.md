@@ -26,7 +26,13 @@ Update a student.
 Delete a student.
 **Response:** `{ success }`
 
+### GET /api/students/stats/breakdown
+Get aggregate attendance statistics breakdown (totals, risk distribution, biometric coverage).
+**Query:** `search?`, `classId?`, `status?`, `minAttendance?`, `subject?`
+**Response:** `AttendanceStatistics`
+
 ## Attendance
+
 
 ### GET /api/attendance
 Get attendance records.
