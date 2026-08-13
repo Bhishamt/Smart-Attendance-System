@@ -27,9 +27,12 @@ import {
   XCircle,
   AlertCircle,
   ArrowUpDown,
+  Printer,
 } from "lucide-react";
 import { Student, ClassInfo } from "../types";
 import { exportStudentsToCSV, exportStudentsToJSON } from "../utils/dataExport";
+import { triggerReportPrint } from "../utils/printReport";
+
 
 interface StudentsViewProps {
   students: Student[];
@@ -177,6 +180,15 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
             <Download className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             <span>Export JSON</span>
           </button>
+          <button
+            onClick={() => triggerReportPrint(filteredStudents)}
+            className="px-4 py-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-2xl transition-all flex items-center justify-center gap-2 text-sm shrink-0 shadow-sm border border-slate-200 dark:border-slate-700"
+            title="Print Attendance Report"
+          >
+            <Printer className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            <span>Print Report</span>
+          </button>
+
           <button
             onClick={onOpenAddStudent}
             className="px-5 py-3 gradient-bg text-white font-bold rounded-2xl shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 active:scale-95 transition-all flex items-center justify-center gap-2 text-sm shrink-0"
