@@ -861,6 +861,107 @@ app.get("/api/classes", (req, res) => {
   res.json(classesData);
 });
 
+export interface ClassAttendanceSummary {
+  classId: string;
+  className: string;
+  totalStudents: number;
+  avgAttendancePercent: number;
+  statusBreakdown: {
+    Present: number;
+    Absent: number;
+    Late: number;
+    Medical: number;
+  };
+  riskBreakdown: {
+    Critical: number;
+    High: number;
+    Moderate: number;
+    Good: number;
+  };
+  atRiskCount: number;
+  topPerformers: (Student & { riskLevel: RiskLevel })[];
+  needsAttention: (Student & { riskLevel: RiskLevel })[];
+}
+
+export interface ClassSummaryOptions {
+  topLimit?: number;
+  atRiskThreshold?: number;
+}
+
+export function buildClassAttendanceSummary(
+  classId: string,
+  className: string,
+  students: Student[],
+  options: ClassSummaryOptions = {}
+): ClassAttendanceSummary {
+  const rawTopLimit = options.topLimit ?? 3;
+  const topLimit = isNaN(rawTopLimit) ? 3 : Math.max(1, Math.min(50, Math.floor(rawTopLimit)));
+  const rawThreshold = options.atRiskThreshold ?? 75;
+  const threshold = isNaN(rawThreshold) || rawThreshold <= 0 ? 75 : rawThreshold;
+
+  const total = students.length;
+  const avgAttendancePercent =
+    total === 0
+      ? 0
+      : Math.round(students.reduce((acc, s) => acc + (s.attendancePercent || 0), 0) / total);
+
+  const statusBreakdown = {
+    Present: students.filter((s) => s.status === "Present").length,
+    Absent: students.filter((s) => s.status === "Absent").length,
+    Late: students.filter((s) => s.status === "Late").length,
+    Medical: students.filter((s) => s.status === "Medical").length,
+  };
+
+  const riskBreakdown = {
+    Critical: students.filter((s) => calculateRiskLevel(s.attendancePercent) === "Critical").length,
+    High: students.filter((s) => calculateRiskLevel(s.attendancePercent) === "High").length,
+    Moderate: students.filter((s) => calculateRiskLevel(s.attendancePercent) === "Moderate").length,
+    Good: students.filter((s) => calculateRiskLevel(s.attendancePercent) === "Good").length,
+  };
+
+  const atRiskCount = riskBreakdown.Critical + riskBreakdown.High + riskBreakdown.Moderate;
+
+  const topPerformers = students
+    .filter((s) => s.attendancePercent >= threshold)
+    .sort((a, b) => b.attendancePercent - a.attendancePercent)
+    .slice(0, topLimit)
+    .map((s) => ({ ...s, riskLevel: calculateRiskLevel(s.attendancePercent) }));
+
+  const needsAttention = students
+    .filter((s) => s.attendancePercent < threshold)
+    .sort((a, b) => a.attendancePercent - b.attendancePercent)
+    .slice(0, topLimit)
+    .map((s) => ({ ...s, riskLevel: calculateRiskLevel(s.attendancePercent) }));
+
+  return {
+    classId,
+    className,
+    totalStudents: total,
+    avgAttendancePercent,
+    statusBreakdown,
+    riskBreakdown,
+    atRiskCount,
+    topPerformers,
+    needsAttention,
+  };
+}
+
+// Get per-class attendance summary with top performers and students needing attention
+app.get("/api/classes/:id/summary", (req, res) => {
+  const targetClass = classesData.find((c) => c.id === req.params.id);
+  if (!targetClass) {
+    return res.status(404).json({ error: "Class not found" });
+  }
+  const classStudents = studentsData.filter((s) => s.classId === req.params.id);
+  const topLimitParam = typeof req.query.topLimit === "string" ? parseInt(req.query.topLimit, 10) : NaN;
+  const thresholdParam = typeof req.query.threshold === "string" ? parseFloat(req.query.threshold) : NaN;
+  const summary = buildClassAttendanceSummary(targetClass.id, targetClass.name, classStudents, {
+    topLimit: isNaN(topLimitParam) ? undefined : topLimitParam,
+    atRiskThreshold: isNaN(thresholdParam) ? undefined : thresholdParam,
+  });
+  res.json(summary);
+});
+
 // Add a Subject for a Semester / Class
 app.post("/api/classes/:id/subjects", (req, res) => {
   const { subjectName, semester } = req.body;
