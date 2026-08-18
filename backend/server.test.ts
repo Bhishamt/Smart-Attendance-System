@@ -17,6 +17,8 @@ import {
   generateStudentsJSON,
   calculateAttendanceStatistics,
   buildClassAttendanceSummary,
+  validateStudentRecord,
+  findDuplicateStudents,
   Student,
 } from "./server.ts";
 
@@ -851,3 +853,118 @@ describe("Class Attendance Summary Suite", () => {
 
 
 
+
+describe("Duplicate Student Detection Suite", () => {
+  const dupStudents: Student[] = [
+    {
+      id: "d1",
+      name: "Alice Dup",
+      rollNo: "701",
+      classId: "cs-3b",
+      className: "Computer Science - 3B",
+      email: "alice@dupe.edu",
+      phone: "+91 9100000000",
+      attendancePercent: 80,
+      totalClasses: 20,
+      presentDays: 16,
+      absentDays: 4,
+      status: "Present",
+      photo: "a.jpg",
+    },
+    {
+      id: "d2",
+      name: "Alice Smith",
+      rollNo: "702",
+      classId: "cs-3b",
+      className: "Computer Science - 3B",
+      email: "ALICE@DUPE.EDU",
+      phone: "+91 9111111111",
+      attendancePercent: 90,
+      totalClasses: 20,
+      presentDays: 18,
+      absentDays: 2,
+      status: "Present",
+      photo: "b.jpg",
+    },
+    {
+      id: "d3",
+      name: "Bob Jones",
+      rollNo: "701",
+      classId: "ce-2a",
+      className: "Civil Engineering - 2A",
+      email: "bob@dupe.edu",
+      phone: "+91 9222222222",
+      attendancePercent: 70,
+      totalClasses: 20,
+      presentDays: 14,
+      absentDays: 6,
+      status: "Absent",
+      photo: "c.jpg",
+    },
+    {
+      id: "d4",
+      name: "Unique Student",
+      rollNo: "704",
+      classId: "cs-3b",
+      className: "Computer Science - 3B",
+      email: "unique@dupe.edu",
+      phone: "+91 9333333333",
+      attendancePercent: 95,
+      totalClasses: 20,
+      presentDays: 19,
+      absentDays: 1,
+      status: "Present",
+      photo: "d.jpg",
+    },
+  ];
+
+  it("should detect duplicate student records by email ignoring whitespace and case", () => {
+    const groups = findDuplicateStudents(dupStudents);
+    const emailGroup = groups.find((g) => g.field === "email");
+    assert.ok(emailGroup, "expected an email duplicate group");
+    assert.equal(emailGroup!.key, "alice@dupe.edu");
+    assert.equal(emailGroup!.count, 2);
+  });
+
+  it("should detect duplicate student records by roll number", () => {
+    const groups = findDuplicateStudents(dupStudents);
+    const rollGroup = groups.find((g) => g.field === "rollNo");
+    assert.ok(rollGroup, "expected a rollNo duplicate group");
+    assert.equal(rollGroup!.key, "701");
+    assert.equal(rollGroup!.count, 2);
+  });
+
+  it("should exclude unique records from duplicate groups", () => {
+    const groups = findDuplicateStudents(dupStudents);
+    const groupKeys = groups.map((g) => g.key);
+    assert.ok(!groupKeys.includes("unique@dupe.edu"));
+    assert.ok(!groupKeys.includes("704"));
+  });
+
+  it("should return no duplicate groups for an empty or unique dataset", () => {
+    assert.deepEqual(findDuplicateStudents([]), []);
+    assert.equal(findDuplicateStudents([dupStudents[3]]).length, 0);
+  });
+});
+
+describe("Student Record Validation Suite", () => {
+  it("should accept a fully valid student record", () => {
+    const result = validateStudentRecord({ name: "Valid Student", rollNo: "801", email: "valid@edu.in", attendancePercent: 85 });
+    assert.equal(result.valid, true);
+    assert.deepEqual(result.errors, []);
+  });
+
+  it("should reject records missing required name and roll number", () => {
+    const result = validateStudentRecord({ email: "nope@edu.in" });
+    assert.equal(result.valid, false);
+    assert.ok(result.errors.some((e) => e.includes("Name")));
+    assert.ok(result.errors.some((e) => e.includes("Roll")));
+  });
+
+  it("should reject malformed email and out-of-range attendance percentage", () => {
+    const result = validateStudentRecord({ name: "X", rollNo: "802", email: "bad-email", attendancePercent: 120 });
+    assert.equal(result.valid, false);
+    assert.ok(result.errors.some((e) => e.toLowerCase().includes("email")));
+    assert.ok(result.errors.some((e) => e.includes("between 0 and 100")));
+  });
+});
