@@ -385,6 +385,7 @@ export default function App() {
           {activeTab === "analytics" && (
             <AnalyticsView
               stats={filteredStats}
+              students={filteredStudents}
               onBack={() => setActiveTab("dashboard")}
               onOpenDrive={() => setShowDriveModal(true)}
             />

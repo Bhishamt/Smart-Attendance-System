@@ -25,15 +25,17 @@ import {
   Cell,
   Legend,
 } from "recharts";
-import { DashboardStats } from "../types";
+import { DashboardStats, Student } from "../types";
+import { getTopPerformers, getNeedsAttention, summarizeByClass } from "../utils/attendanceInsights";
 
 interface AnalyticsViewProps {
   stats: DashboardStats | null;
+  students: Student[];
   onBack: () => void;
   onOpenDrive: () => void;
 }
 
-export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ stats, onBack, onOpenDrive }) => {
+export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ stats, students, onBack, onOpenDrive }) => {
   const [exportFormat, setExportFormat] = useState<"PDF" | "Excel" | "Drive">("PDF");
   const [exported, setExported] = useState(false);
 
@@ -230,6 +232,112 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ stats, onBack, onO
           </div>
           <div className="text-3xl font-extrabold text-slate-800 dark:text-white">
             {stats.todayPresent}
+          </div>
+        </div>
+      </div>
+
+      {/* Attendance Insights Section */}
+      <div className="glass-card rounded-3xl p-6 shadow-sm space-y-5">
+        <div>
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest block">
+            Student Insights
+          </span>
+          <h3 className="text-lg font-bold text-slate-800 dark:text-white">
+            Top Performers & Needs Attention
+          </h3>
+        </div>
+
+        {summarizeByClass(students).map((cls) => (
+          <div
+            key={cls.classId}
+            className="flex items-center justify-between p-3 rounded-2xl bg-white/70 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/60 shadow-sm"
+          >
+            <div>
+              <p className="text-sm font-bold text-slate-800 dark:text-white">{cls.className}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                {cls.totalStudents} students
+              </p>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="text-right">
+                <p className="text-sm font-extrabold text-indigo-600">{cls.avgAttendancePercent}%</p>
+                <p className="text-[10px] text-slate-400 uppercase">Avg Attendance</p>
+              </div>
+              <div className="text-right">
+                <p className={`text-sm font-extrabold ${cls.atRiskCount > 0 ? "text-red-600" : "text-emerald-600"}`}>
+                  {cls.atRiskCount}
+                </p>
+                <p className="text-[10px] text-slate-400 uppercase">At Risk</p>
+              </div>
+            </div>
+          </div>
+        ))}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="rounded-2xl border border-emerald-100 dark:border-emerald-900/60 bg-emerald-50/60 dark:bg-emerald-950/30 p-4 space-y-3">
+            <h4 className="text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
+              Top Performers
+            </h4>
+            {getTopPerformers(students, 3).map(({ student, riskLevel }) => (
+              <div key={student.id} className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <img
+                    src={student.photo}
+                    alt={student.name}
+                    className="w-8 h-8 rounded-full border border-emerald-200 dark:border-emerald-800 object-cover"
+                  />
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-slate-800 dark:text-white truncate">
+                      {student.name}
+                    </p>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                      Roll {student.rollNo}
+                    </p>
+                  </div>
+                </div>
+                <span className="text-xs font-extrabold text-emerald-600">
+                  {student.attendancePercent}% · {riskLevel}
+                </span>
+              </div>
+            ))}
+            {students.length === 0 && (
+              <p className="text-xs text-slate-500">No student records available.</p>
+            )}
+          </div>
+
+          <div className="rounded-2xl border border-red-100 dark:border-red-900/60 bg-red-50/60 dark:bg-red-950/30 p-4 space-y-3">
+            <h4 className="text-xs font-bold text-red-700 dark:text-red-400 uppercase tracking-wider">
+              Needs Attention
+            </h4>
+            {getNeedsAttention(students, 75, 3).map(({ student, riskLevel }) => (
+              <div key={student.id} className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <img
+                    src={student.photo}
+                    alt={student.name}
+                    className="w-8 h-8 rounded-full border border-red-200 dark:border-red-800 object-cover"
+                  />
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-slate-800 dark:text-white truncate">
+                      {student.name}
+                    </p>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                      Roll {student.rollNo}
+                    </p>
+                  </div>
+                </div>
+                <span
+                  className={`text-xs font-extrabold ${
+                    riskLevel === "Critical" ? "text-red-600" : "text-amber-600"
+                  }`}
+                >
+                  {student.attendancePercent}% · {riskLevel}
+                </span>
+              </div>
+            ))}
+            {getNeedsAttention(students, 75, 3).length === 0 && (
+              <p className="text-xs text-slate-500">No students below the 75% threshold.</p>
+            )}
           </div>
         </div>
       </div>
