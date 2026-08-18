@@ -919,7 +919,7 @@ export function buildClassAttendanceSummary(
     Good: students.filter((s) => calculateRiskLevel(s.attendancePercent) === "Good").length,
   };
 
-  const atRiskCount = riskBreakdown.Critical + riskBreakdown.High + riskBreakdown.Moderate;
+  const atRiskCount = students.filter((s) => s.attendancePercent < threshold).length;
 
   const topPerformers = students
     .filter((s) => s.attendancePercent >= threshold)
@@ -1500,7 +1500,15 @@ async function startServer() {
   });
 }
 
-if (process.env.NODE_ENV !== "test" && !process.execArgv.includes("--test")) {
+export function isTestEnvironment(): boolean {
+  return (
+    process.env.NODE_ENV === "test" ||
+    (process.env.NODE_TEST_CONTEXT || "").length > 0 ||
+    process.execArgv.includes("--test")
+  );
+}
+
+if (!isTestEnvironment()) {
   startServer();
 }
 
