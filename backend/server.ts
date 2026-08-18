@@ -45,6 +45,68 @@ export function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+export interface StudentValidationResult {
+  valid: boolean;
+  errors: string[];
+}
+
+export function validateStudentRecord(record: Partial<Student>): StudentValidationResult {
+  const errors: string[] = [];
+  if (!record.name || !String(record.name!).trim()) {
+    errors.push("Name is required.");
+  }
+  if (!record.rollNo || !String(record.rollNo!).trim()) {
+    errors.push("Roll number is required.");
+  }
+  if (record.email && !isValidEmail(record.email)) {
+    errors.push("Email must be a valid address.");
+  }
+  if (
+    record.attendancePercent !== undefined &&
+    (record.attendancePercent < 0 || record.attendancePercent > 100)
+  ) {
+    errors.push("Attendance percentage must be between 0 and 100.");
+  }
+  return { valid: errors.length === 0, errors };
+}
+
+export interface DuplicateGroup {
+  key: string;
+  field: "email" | "rollNo";
+  count: number;
+  students: Student[];
+}
+
+export function findDuplicateStudents(students: Student[]): DuplicateGroup[] {
+  const byEmail = new Map<string, Student[]>();
+  const byRoll = new Map<string, Student[]>();
+
+  students.forEach((s) => {
+    const emailKey = (s.email || "").trim().toLowerCase();
+    if (emailKey) {
+      byEmail.set(emailKey, [...(byEmail.get(emailKey) || []), s]);
+    }
+    const rollKey = (s.rollNo || "").trim().toLowerCase();
+    if (rollKey) {
+      byRoll.set(rollKey, [...(byRoll.get(rollKey) || []), s]);
+    }
+  });
+
+  const groups: DuplicateGroup[] = [];
+  byEmail.forEach((bucket, key) => {
+    if (bucket.length > 1) {
+      groups.push({ key, field: "email", count: bucket.length, students: bucket });
+    }
+  });
+  byRoll.forEach((bucket, key) => {
+    if (bucket.length > 1) {
+      groups.push({ key, field: "rollNo", count: bucket.length, students: bucket });
+    }
+  });
+
+  return groups;
+}
+
 export function generateStudentsJSON(students: Student[]): string {
   return JSON.stringify(students, null, 2);
 }
@@ -663,6 +725,20 @@ app.get("/api/students/summary", (req, res) => {
   const summary = calculateSummaryStats(filtered);
   res.json(summary);
 });
+
+// Validate a student record before add/import
+app.post("/api/students/validate", (req, res) => {
+  const result = validateStudentRecord(req.body || {});
+  res.json(result);
+});
+
+// Find student records that share an email or roll number
+app.get("/api/students/duplicates", (req, res) => {
+  const groups = findDuplicateStudents(studentsData);
+  const totalDuplicates = groups.reduce((acc, g) => acc + (g.count - 1), 0);
+  res.json({ totalDuplicates, groups });
+});
+
 
 // Get comprehensive attendance statistics breakdown
 app.get("/api/students/stats/breakdown", (req, res) => {
