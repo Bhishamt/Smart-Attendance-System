@@ -16,6 +16,7 @@ import {
   simulateSocialAuth,
   generateStudentsJSON,
   calculateAttendanceStatistics,
+  buildClassAttendanceSummary,
   Student,
 } from "./server.ts";
 
@@ -722,6 +723,128 @@ describe("Attendance Statistics Breakdown Suite", () => {
     assert.equal(emptyStats.biometricCoveragePercent, 0);
     assert.equal(emptyStats.statusBreakdown.Present, 0);
     assert.equal(emptyStats.riskBreakdown.Critical, 0);
+  });
+});
+
+describe("Class Attendance Summary Suite", () => {
+  const classSummaryStudents: Student[] = [
+    {
+      id: "cs-1",
+      name: "Top Performer",
+      rollNo: "601",
+      classId: "cs-3b",
+      className: "Computer Science - 3B",
+      email: "top@example.com",
+      phone: "+91 9011111111",
+      attendancePercent: 95,
+      totalClasses: 20,
+      presentDays: 19,
+      absentDays: 1,
+      status: "Present",
+      photo: "photo1.jpg",
+      biometricRegistered: true,
+    },
+    {
+      id: "cs-2",
+      name: "Critical Student",
+      rollNo: "602",
+      classId: "cs-3b",
+      className: "Computer Science - 3B",
+      email: "critical@example.com",
+      phone: "+91 9022222222",
+      attendancePercent: 55,
+      totalClasses: 20,
+      presentDays: 11,
+      absentDays: 9,
+      status: "Absent",
+      photo: "photo2.jpg",
+      biometricRegistered: false,
+    },
+    {
+      id: "cs-3",
+      name: "High Risk Student",
+      rollNo: "603",
+      classId: "cs-3b",
+      className: "Computer Science - 3B",
+      email: "high@example.com",
+      phone: "+91 9033333333",
+      attendancePercent: 70,
+      totalClasses: 20,
+      presentDays: 14,
+      absentDays: 6,
+      status: "Absent",
+      photo: "photo3.jpg",
+      biometricRegistered: false,
+    },
+    {
+      id: "cs-4",
+      name: "Late Arrival Student",
+      rollNo: "604",
+      classId: "cs-3b",
+      className: "Computer Science - 3B",
+      email: "late@example.com",
+      phone: "+91 9044444444",
+      attendancePercent: 88,
+      totalClasses: 20,
+      presentDays: 18,
+      absentDays: 2,
+      status: "Late",
+      photo: "photo4.jpg",
+      biometricRegistered: true,
+    },
+  ];
+
+  it("should aggregate per-class totals, averages, and status breakdowns", () => {
+    const summary = buildClassAttendanceSummary("cs-3b", "Computer Science - 3B", classSummaryStudents);
+    assert.equal(summary.classId, "cs-3b");
+    assert.equal(summary.className, "Computer Science - 3B");
+    assert.equal(summary.totalStudents, 4);
+    assert.equal(summary.avgAttendancePercent, 77); // (95 + 55 + 70 + 88) / 4
+    assert.equal(summary.statusBreakdown.Present, 1);
+    assert.equal(summary.statusBreakdown.Absent, 2);
+    assert.equal(summary.statusBreakdown.Late, 1);
+    assert.equal(summary.statusBreakdown.Medical, 0);
+  });
+
+  it("should split students into top performers and those needing attention", () => {
+    const summary = buildClassAttendanceSummary("cs-3b", "CS - 3B", classSummaryStudents, { topLimit: 2 });
+    assert.equal(summary.atRiskCount, 2); // 55% and 70% fall below 75% threshold
+    assert.equal(summary.riskBreakdown.Good, 2);
+    assert.equal(summary.riskBreakdown.Critical, 1);
+    assert.equal(summary.riskBreakdown.High, 1);
+    assert.equal(summary.topPerformers.length, 2);
+    assert.equal(summary.topPerformers[0].attendancePercent, 95);
+    assert.equal(summary.topPerformers[0].riskLevel, "Good");
+    assert.equal(summary.needsAttention.length, 2);
+    assert.equal(summary.needsAttention[0].attendancePercent, 55);
+    assert.equal(summary.needsAttention[0].riskLevel, "Critical");
+    assert.equal(summary.needsAttention[1].riskLevel, "High");
+  });
+
+  it("should honor custom thresholds and top limits", () => {
+    const summary = buildClassAttendanceSummary("cs-3b", "CS - 3B", classSummaryStudents, {
+      atRiskThreshold: 90,
+      topLimit: 1,
+    });
+    assert.equal(summary.atRiskCount, 3); // 55%, 70%, and 88% are below 90%
+    assert.equal(summary.topPerformers.length, 1);
+    assert.equal(summary.topPerformers[0].attendancePercent, 95);
+    assert.equal(summary.needsAttention.length, 1);
+    assert.equal(summary.needsAttention[0].attendancePercent, 55);
+  });
+
+  it("should handle empty classes and invalid configuration safely", () => {
+    const empty = buildClassAttendanceSummary("cs-x", "Missing Class", []);
+    assert.equal(empty.totalStudents, 0);
+    assert.equal(empty.avgAttendancePercent, 0);
+    assert.equal(empty.topPerformers.length, 0);
+    assert.equal(empty.needsAttention.length, 0);
+    assert.equal(empty.statusBreakdown.Absent, 0);
+    assert.equal(empty.riskBreakdown.Critical, 0);
+
+    const safe = buildClassAttendanceSummary("cs-3b", "CS - 3B", classSummaryStudents, { atRiskThreshold: -5, topLimit: 0 });
+    assert.equal(safe.topPerformers.length, 1); // topLimit clamps to at least 1
+    assert.equal(safe.atRiskCount, 2); // invalid threshold falls back to 75
   });
 });
 
