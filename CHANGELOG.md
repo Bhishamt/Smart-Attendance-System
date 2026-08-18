@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-08-18
+
+### Added
+- Per-class attendance summary aggregation utility (`buildClassAttendanceSummary`) and API endpoint (`GET /api/classes/:id/summary`) in `backend/server.ts` delivering class totals, average attendance, status breakdowns, risk breakdowns, at-risk counts, top performers, and students needing attention.
+- Duplicate student detection utility (`findDuplicateStudents`) and endpoint (`GET /api/students/duplicates`) in `backend/server.ts` flagging records sharing an email address or roll number.
+- Student record validation utility (`validateStudentRecord`) and endpoint (`POST /api/students/validate`) in `backend/server.ts` checking required fields, email format, and attendance range.
+- Attendance insights utility (`getTopPerformers`, `getNeedsAttention`, `summarizeByClass`, `calculateRiskLevelValue`) in `frontend/src/utils/attendanceInsights.ts`.
+- Interactive "Student Insights" section in `frontend/src/screens/AnalyticsView.tsx` rendering per-class at-risk summaries alongside top performers and students needing attention.
+- Expanded backend unit test suites (`Class Attendance Summary Suite`, `Duplicate Student Detection Suite`, `Student Record Validation Suite`) in `server.test.ts` covering aggregation math, custom thresholds, duplicate grouping, and validation edge cases.
+
+### Fixed
+- Backend unit test runner now detects the Node.js test runner via `NODE_TEST_CONTEXT` so `tsx --test` suites exit cleanly without lingering server sockets.
+- At-risk count in class summary now honors the configured attendance threshold instead of a fixed risk band.
+- Scoped TypeScript lint projects per package (`frontend/tsconfig.json`, `backend/tsconfig.json`) and added missing `@types/react` / `@types/react-dom` devDependencies so CI type-checking no longer pulls `backend/server.ts` through the root project config.
+
 ## [1.3.0] - 2026-08-13
 
 ### Added

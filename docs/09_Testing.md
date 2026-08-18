@@ -8,7 +8,7 @@ The project uses a three-tier testing approach for quality assurance.
 
 ### Unit Tests
 - **Frontend**: Component rendering, state management, utility functions
-- **Backend**: API endpoint handlers, data transformation, validation, student status filtering, multi-field search & subject filtering, student directory sorting & ordering, student list pagination & page metadata utilities, bulk status updates, attendance analytics summary calculations, attendance risk assessment & CSV report export formatting
+- **Backend**: API endpoint handlers, data transformation, validation, student status filtering, multi-field search & subject filtering, student directory sorting & ordering, student list pagination & page metadata utilities, bulk status updates, attendance analytics summary calculations, attendance risk assessment & CSV report export formatting, class attendance summary aggregation, duplicate student detection, and student record validation
 
 ### Integration Tests
 - API endpoint integration with in-memory data store

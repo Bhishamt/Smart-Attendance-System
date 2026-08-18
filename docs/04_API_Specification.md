@@ -31,6 +31,22 @@ Get aggregate attendance statistics breakdown (totals, risk distribution, biomet
 **Query:** `search?`, `classId?`, `status?`, `minAttendance?`, `subject?`
 **Response:** `AttendanceStatistics`
 
+### POST /api/students/validate
+Validate a student record before adding or importing it.
+**Body:** `{ name?, rollNo?, email?, attendancePercent? }`
+**Response:** `{ valid, errors: string[] }`
+
+### GET /api/students/duplicates
+Detect student records sharing the same email address or roll number.
+**Response:** `{ totalDuplicates, groups: DuplicateGroup[] }` where each group is `{ key, field: "email" | "rollNo", count, students }`
+
+## Classes
+
+### GET /api/classes/:id/summary
+Get a per-class attendance summary with aggregates, top performers, and students needing attention.
+**Query:** `topLimit?`, `threshold?`
+**Response:** `ClassAttendanceSummary` — includes `totalStudents`, `avgAttendancePercent`, `statusBreakdown`, `riskBreakdown`, `atRiskCount`, `topPerformers`, and `needsAttention`
+
 ## Attendance
 
 
