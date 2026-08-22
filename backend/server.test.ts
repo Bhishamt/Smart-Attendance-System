@@ -19,6 +19,7 @@ import {
   buildClassAttendanceSummary,
   validateStudentRecord,
   findDuplicateStudents,
+  calculateAttendanceTrends,
   Student,
 } from "./server.ts";
 
@@ -968,3 +969,66 @@ describe("Student Record Validation Suite", () => {
     assert.ok(result.errors.some((e) => e.includes("between 0 and 100")));
   });
 });
+
+describe("Student Attendance Trends Suite", () => {
+  const mockStudents: Student[] = [
+    {
+      id: "t1",
+      name: "Trend Student 1",
+      rollNo: "901",
+      classId: "cs-3b",
+      className: "Computer Science - 3B",
+      email: "t1@example.edu",
+      phone: "+91 9999988888",
+      attendancePercent: 90,
+      totalClasses: 20,
+      presentDays: 18,
+      absentDays: 2,
+      status: "Present",
+      photo: "photo1.jpg",
+    },
+    {
+      id: "t2",
+      name: "Trend Student 2",
+      rollNo: "902",
+      classId: "cs-3b",
+      className: "Computer Science - 3B",
+      email: "t2@example.edu",
+      phone: "+91 9999977777",
+      attendancePercent: 60,
+      totalClasses: 20,
+      presentDays: 12,
+      absentDays: 8,
+      status: "Absent",
+      photo: "photo2.jpg",
+    },
+  ];
+
+  it("should calculate multi-day attendance points and summary metrics", () => {
+    const trends = calculateAttendanceTrends(mockStudents, 7);
+    assert.equal(trends.periodDays, 7);
+    assert.equal(trends.points.length, 7);
+    assert.ok(trends.averageAttendancePercent >= 0 && trends.averageAttendancePercent <= 100);
+    assert.ok(trends.highestAttendanceDay !== null);
+    assert.ok(trends.lowestAttendanceDay !== null);
+    assert.ok(["improving", "declining", "stable"].includes(trends.trendDirection));
+  });
+
+  it("should normalize days boundary parameters between 1 and 30", () => {
+    const minTrends = calculateAttendanceTrends(mockStudents, -5);
+    assert.equal(minTrends.periodDays, 1);
+    assert.equal(minTrends.points.length, 1);
+
+    const maxTrends = calculateAttendanceTrends(mockStudents, 50);
+    assert.equal(maxTrends.periodDays, 30);
+    assert.equal(maxTrends.points.length, 30);
+  });
+
+  it("should handle empty student list safely without crashing", () => {
+    const trends = calculateAttendanceTrends([], 5);
+    assert.equal(trends.periodDays, 5);
+    assert.equal(trends.points.length, 5);
+    assert.ok(typeof trends.averageAttendancePercent === "number");
+  });
+});
+
