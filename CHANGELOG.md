@@ -5,7 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-08-22
+
+### Added
+- Multi-day student attendance trend analytics utility (`calculateAttendanceTrends`) and API endpoint (`GET /api/students/trends`) in `backend/server.ts` delivering period metrics, highest/lowest attendance days, and directional trend indicators (`improving`, `declining`, `stable`).
+- Dedicated backend unit test suite (`Student Attendance Trends Suite`) in `backend/server.test.ts` validating trend point creation, boundary normalization, peak/lowest detection, and empty dataset safety.
+- Frontend attendance trend direction evaluator utility (`evaluateAttendanceTrend`) in `frontend/src/utils/attendanceInsights.ts`.
+- Dedicated frontend unit test suite (`Frontend Attendance Insights Suite`) in `frontend/src/utils/attendanceInsights.test.ts` covering risk level mapping, top performer ranking, at-risk filtering, class summaries, and trend evaluation.
+
 ## [1.4.0] - 2026-08-18
+
 
 ### Added
 - Per-class attendance summary aggregation utility (`buildClassAttendanceSummary`) and API endpoint (`GET /api/classes/:id/summary`) in `backend/server.ts` delivering class totals, average attendance, status breakdowns, risk breakdowns, at-risk counts, top performers, and students needing attention.

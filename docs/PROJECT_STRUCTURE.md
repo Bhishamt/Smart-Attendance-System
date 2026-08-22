@@ -9,6 +9,7 @@ Smart-Attendance-System/
 │   │   ├── components/     # Reusable UI components
 │   │   ├── screens/        # Full-page views
 │   │   ├── services/       # API integration functions
+│   │   ├── utils/          # Attendance insights, export, & report utilities
 │   │   ├── App.tsx         # Main application routing & state
 │   │   ├── index.css       # Tailwind entry and global styles
 │   │   └── types.ts        # TypeScript definitions
