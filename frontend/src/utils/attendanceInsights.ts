@@ -65,3 +65,31 @@ export function summarizeByClass(students: Student[]): ClassHighlights[] {
     };
   }).sort((a, b) => b.avgAttendancePercent - a.avgAttendancePercent);
 }
+
+export interface TrendAnalysis {
+  direction: "improving" | "declining" | "stable";
+  delta: number;
+  label: string;
+}
+
+export function evaluateAttendanceTrend(points: { attendancePercent: number }[]): TrendAnalysis {
+  if (!points || points.length < 2) {
+    return { direction: "stable", delta: 0, label: "Insufficient data points" };
+  }
+
+  const half = Math.floor(points.length / 2);
+  const firstHalf = points.slice(0, half);
+  const secondHalf = points.slice(half);
+
+  const avgFirst = firstHalf.reduce((acc, p) => acc + (p.attendancePercent || 0), 0) / firstHalf.length;
+  const avgSecond = secondHalf.reduce((acc, p) => acc + (p.attendancePercent || 0), 0) / secondHalf.length;
+
+  const delta = Math.round(avgSecond - avgFirst);
+  if (delta >= 2) {
+    return { direction: "improving", delta, label: `Up ${delta}% over period` };
+  }
+  if (delta <= -2) {
+    return { direction: "declining", delta, label: `Down ${Math.abs(delta)}% over period` };
+  }
+  return { direction: "stable", delta, label: "Stable pattern" };
+}
