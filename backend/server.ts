@@ -432,6 +432,92 @@ export function generateStudentsCSV(students: Student[]): string {
   return [headers.join(","), ...rows].join("\n");
 }
 
+export interface CSVImportResult {
+  validRecords: Partial<Student>[];
+  invalidRecords: { row: number; errors: string[] }[];
+}
+
+export function parseCSVAttendanceData(csvContent: string): CSVImportResult {
+  if (!csvContent || typeof csvContent !== "string") {
+    return { validRecords: [], invalidRecords: [] };
+  }
+
+  const lines = csvContent
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+
+  if (lines.length === 0) {
+    return { validRecords: [], invalidRecords: [] };
+  }
+
+  const parseRow = (rowStr: string): string[] => {
+    const result: string[] = [];
+    let current = "";
+    let inQuotes = false;
+    for (let i = 0; i < rowStr.length; i++) {
+      const char = rowStr[i];
+      if (char === '"') {
+        if (inQuotes && rowStr[i + 1] === '"') {
+          current += '"';
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (char === "," && !inQuotes) {
+        result.push(current.trim());
+        current = "";
+      } else {
+        current += char;
+      }
+    }
+    result.push(current.trim());
+    return result;
+  };
+
+  const headers = parseRow(lines[0]).map((h) => h.toLowerCase().replace(/[^a-z0-9%]/g, ""));
+  const validRecords: Partial<Student>[] = [];
+  const invalidRecords: { row: number; errors: string[] }[] = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const values = parseRow(lines[i]);
+    const rowNum = i + 1;
+    const record: Partial<Student> = {};
+
+    headers.forEach((header, idx) => {
+      const val = values[idx] || "";
+      if (header.includes("roll")) record.rollNo = val;
+      else if (header.includes("name")) record.name = val;
+      else if (header.includes("class")) record.className = val;
+      else if (header.includes("email")) record.email = val;
+      else if (header.includes("phone")) record.phone = val;
+      else if (header.includes("attendance")) {
+        const num = parseFloat(val);
+        if (!isNaN(num)) record.attendancePercent = num;
+      } else if (header.includes("present")) {
+        const num = parseInt(val, 10);
+        if (!isNaN(num)) record.presentDays = num;
+      } else if (header.includes("absent")) {
+        const num = parseInt(val, 10);
+        if (!isNaN(num)) record.absentDays = num;
+      } else if (header.includes("status")) {
+        if (["Present", "Absent", "Late", "Medical"].includes(val)) {
+          record.status = val as any;
+        }
+      }
+    });
+
+    const validation = validateStudentRecord(record);
+    if (validation.valid) {
+      validRecords.push(record);
+    } else {
+      invalidRecords.push({ row: rowNum, errors: validation.errors });
+    }
+  }
+
+  return { validRecords, invalidRecords };
+}
+
 export function sortStudentsList(
   students: Student[],
   sortBy: string = "name",
@@ -1000,6 +1086,56 @@ app.post("/api/students", (req, res) => {
   });
 
   res.status(201).json(newStudent);
+});
+
+// Import students via CSV payload
+app.post("/api/students/import/csv", (req, res) => {
+  const { csvContent } = req.body;
+  if (!csvContent || typeof csvContent !== "string") {
+    return res.status(400).json({ error: "csvContent string is required in request body" });
+  }
+
+  const { validRecords, invalidRecords } = parseCSVAttendanceData(csvContent);
+
+  const importedStudents: Student[] = validRecords.map((rec, index) => ({
+    id: `std-${Date.now()}-${index}`,
+    name: rec.name || "Imported Student",
+    rollNo: rec.rollNo || `${500 + index}`,
+    classId: "cs-3b",
+    className: rec.className || "Computer Science - 3B",
+    email: rec.email || `imported.${index}@example.edu`,
+    phone: rec.phone || "+91 9999900000",
+    attendancePercent: rec.attendancePercent ?? 100,
+    totalClasses: (rec.presentDays || 0) + (rec.absentDays || 0) || 1,
+    presentDays: rec.presentDays ?? 1,
+    absentDays: rec.absentDays ?? 0,
+    status: rec.status || "Present",
+    photo: "https://ui-avatars.com/api/?name=User&background=random",
+    lastMarkedTime: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    biometricRegistered: true,
+    approved: true,
+    semester: "Semester 5 • Sec B",
+    subject: "Computer Networks",
+  }));
+
+  if (importedStudents.length > 0) {
+    studentsData.unshift(...importedStudents);
+    activitiesData.unshift({
+      id: `act-${Date.now()}`,
+      title: "Batch CSV Import",
+      subtitle: `${importedStudents.length} students imported from CSV`,
+      timeAgo: "Just now",
+      type: "student",
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  res.status(201).json({
+    message: `Successfully imported ${importedStudents.length} student record(s)`,
+    importedCount: importedStudents.length,
+    invalidCount: invalidRecords.length,
+    invalidRecords,
+  });
 });
 
 // Mark / Update Attendance in Batch
