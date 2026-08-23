@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-08-23
+
+### Added
+- CSV attendance data parser utility (`parseCSVAttendanceData`) and batch import endpoint (`POST /api/students/import/csv`) in `backend/server.ts` parsing CSV payloads into student records and flagging invalid rows.
+- Dedicated backend unit test suite (`CSV Attendance Data Import Suite`) in `backend/server.test.ts` testing valid CSV parsing, missing column fallbacks, row validation error reporting, and empty payload safety.
+- Frontend CSV content generation and parsing utilities (`generateCSVContent`, `parseCSVContent`) in `frontend/src/utils/csvExport.ts`.
+- Dedicated frontend unit test suite (`Frontend CSV Export Suite`) in `frontend/src/utils/csvExport.test.ts` covering double-quote escaping, header formatting, roundtrip CSV parsing, and edge case safety.
+
 ## [1.5.0] - 2026-08-22
 
 ### Added

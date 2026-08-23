@@ -40,6 +40,11 @@ Validate a student record before adding or importing it.
 Detect student records sharing the same email address or roll number.
 **Response:** `{ totalDuplicates, groups: DuplicateGroup[] }` where each group is `{ key, field: "email" | "rollNo", count, students }`
 
+### POST /api/students/import/csv
+Parse and batch import student records from a CSV string payload.
+**Body:** `{ csvContent: string }`
+**Response:** `{ message, importedCount, invalidCount, invalidRecords: { row: number, errors: string[] }[] }`
+
 ## Classes
 
 ### GET /api/classes/:id/summary
