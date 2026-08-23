@@ -20,6 +20,7 @@ import {
   validateStudentRecord,
   findDuplicateStudents,
   calculateAttendanceTrends,
+  parseCSVAttendanceData,
   Student,
 } from "./server.ts";
 
@@ -1029,6 +1030,37 @@ describe("Student Attendance Trends Suite", () => {
     assert.equal(trends.periodDays, 5);
     assert.equal(trends.points.length, 5);
     assert.ok(typeof trends.averageAttendancePercent === "number");
+  });
+});
+
+describe("CSV Attendance Data Import Suite", () => {
+  it("should parse valid CSV content into clean student records", () => {
+    const csvStr = `Roll No,Name,Class,Email,Phone,Attendance %,Present Days,Absent Days,Status\n"101","John Doe","CS-3B","john@example.com","+91 9876543210",85,17,3,"Present"\n"102","Jane Smith","CS-3B","jane@example.com","+91 9876543211",90,18,2,"Present"`;
+    const { validRecords, invalidRecords } = parseCSVAttendanceData(csvStr);
+
+    assert.equal(validRecords.length, 2);
+    assert.equal(invalidRecords.length, 0);
+    assert.equal(validRecords[0].name, "John Doe");
+    assert.equal(validRecords[0].rollNo, "101");
+    assert.equal(validRecords[0].email, "john@example.com");
+    assert.equal(validRecords[0].attendancePercent, 85);
+    assert.equal(validRecords[1].name, "Jane Smith");
+  });
+
+  it("should flag invalid or missing student record fields during parsing", () => {
+    const csvStr = `Roll No,Name,Email\n"","No Name Student","invalid-email"\n"103","","valid@example.com"`;
+    const { validRecords, invalidRecords } = parseCSVAttendanceData(csvStr);
+
+    assert.equal(validRecords.length, 0);
+    assert.equal(invalidRecords.length, 2);
+    assert.equal(invalidRecords[0].row, 2);
+    assert.ok(invalidRecords[0].errors.length > 0);
+  });
+
+  it("should return empty results safely for empty or invalid CSV text", () => {
+    const emptyResult = parseCSVAttendanceData("");
+    assert.equal(emptyResult.validRecords.length, 0);
+    assert.equal(emptyResult.invalidRecords.length, 0);
   });
 });
 
