@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] - 2026-08-29
+
+### Added
+- Bulk attendance status update utility (`bulkUpdateAttendanceStatus`) and API endpoint (`POST /api/students/bulk-status`) in `backend/server.ts` updating student attendance statuses, recalculating total classes, present/absent days, and overall percentages.
+- Dedicated backend unit test suite (`Bulk Attendance Status Update Suite`) in `backend/server.test.ts` testing multi-student batch status changes, attendance math recalculation, status validation, and empty selection handling.
+- Frontend bulk attendance status formatters and preview calculators (`formatBulkStatusSummary`, `filterStudentsForBulkAction`, `calculateBulkAttendancePreview`) in `frontend/src/utils/bulkAttendance.ts`.
+- Dedicated frontend unit test suite (`Frontend Bulk Attendance Utility Suite`) in `frontend/src/utils/bulkAttendance.test.ts` covering status summary formatting, student filtering, and projected preview metrics.
+
 ## [1.6.0] - 2026-08-23
 
 ### Added
