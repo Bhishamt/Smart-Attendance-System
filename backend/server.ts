@@ -518,6 +518,52 @@ export function parseCSVAttendanceData(csvContent: string): CSVImportResult {
   return { validRecords, invalidRecords };
 }
 
+export interface BulkUpdateResult {
+  updatedCount: number;
+  updatedStudents: Student[];
+  invalidStatus: boolean;
+}
+
+export function bulkUpdateAttendanceStatus(
+  students: Student[],
+  studentIds: string[],
+  newStatus: "Present" | "Absent" | "Late" | "Medical",
+  markedTime?: string
+): BulkUpdateResult {
+  const allowedStatuses = ["Present", "Absent", "Late", "Medical"];
+  if (!allowedStatuses.includes(newStatus)) {
+    return { updatedCount: 0, updatedStudents: [], invalidStatus: true };
+  }
+
+  if (!Array.isArray(studentIds) || studentIds.length === 0) {
+    return { updatedCount: 0, updatedStudents: [], invalidStatus: false };
+  }
+
+  const idSet = new Set(studentIds);
+  const updatedStudents: Student[] = [];
+
+  students.forEach((s) => {
+    if (idSet.has(s.id)) {
+      s.status = newStatus;
+      s.lastMarkedTime = markedTime || "09:30 AM";
+      s.totalClasses = (s.totalClasses || 0) + 1;
+      if (newStatus === "Present" || newStatus === "Late") {
+        s.presentDays = (s.presentDays || 0) + 1;
+      } else if (newStatus === "Absent") {
+        s.absentDays = (s.absentDays || 0) + 1;
+      }
+      s.attendancePercent = calculateAttendancePercent(s.presentDays, s.totalClasses);
+      updatedStudents.push(s);
+    }
+  });
+
+  return {
+    updatedCount: updatedStudents.length,
+    updatedStudents,
+    invalidStatus: false,
+  };
+}
+
 export function sortStudentsList(
   students: Student[],
   sortBy: string = "name",
@@ -1330,6 +1376,38 @@ app.post("/api/ai/recognize-face", (req, res) => {
     success: true,
     recognized,
     timestamp: new Date().toISOString(),
+  });
+});
+
+// Bulk Update Student Attendance Status
+app.post("/api/students/bulk-status", (req, res) => {
+  const { studentIds, status, lastMarkedTime } = req.body;
+  if (!status || !["Present", "Absent", "Late", "Medical"].includes(status)) {
+    return res.status(400).json({ error: "Invalid or missing status parameter. Allowed: Present, Absent, Late, Medical" });
+  }
+
+  if (!Array.isArray(studentIds) || studentIds.length === 0) {
+    return res.status(400).json({ error: "studentIds must be a non-empty array of student IDs" });
+  }
+
+  const result = bulkUpdateAttendanceStatus(studentsData, studentIds, status, lastMarkedTime);
+
+  if (result.updatedCount > 0) {
+    activitiesData.unshift({
+      id: `act-${Date.now()}`,
+      title: "Batch Attendance Status Updated",
+      subtitle: `Marked ${result.updatedCount} students as ${status}`,
+      timeAgo: "Just now",
+      type: "attendance",
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  res.json({
+    success: true,
+    updatedCount: result.updatedCount,
+    status,
+    updatedIds: result.updatedStudents.map((s) => s.id),
   });
 });
 
