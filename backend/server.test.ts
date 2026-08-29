@@ -21,6 +21,7 @@ import {
   findDuplicateStudents,
   calculateAttendanceTrends,
   parseCSVAttendanceData,
+  bulkUpdateAttendanceStatus,
   Student,
 } from "./server.ts";
 
@@ -1063,4 +1064,92 @@ describe("CSV Attendance Data Import Suite", () => {
     assert.equal(emptyResult.invalidRecords.length, 0);
   });
 });
+
+describe("Bulk Attendance Status Update Suite", () => {
+  const bulkTestStudents: Student[] = [
+    {
+      id: "bulk-1",
+      name: "Student One",
+      rollNo: "701",
+      classId: "cs-3b",
+      className: "Computer Science - 3B",
+      email: "one@example.com",
+      phone: "+91 9700000001",
+      attendancePercent: 70,
+      totalClasses: 10,
+      presentDays: 7,
+      absentDays: 3,
+      status: "Absent",
+      photo: "photo1.jpg",
+    },
+    {
+      id: "bulk-2",
+      name: "Student Two",
+      rollNo: "702",
+      classId: "cs-3b",
+      className: "Computer Science - 3B",
+      email: "two@example.com",
+      phone: "+91 9700000002",
+      attendancePercent: 80,
+      totalClasses: 10,
+      presentDays: 8,
+      absentDays: 2,
+      status: "Absent",
+      photo: "photo2.jpg",
+    },
+    {
+      id: "bulk-3",
+      name: "Student Three",
+      rollNo: "703",
+      classId: "cs-3b",
+      className: "Computer Science - 3B",
+      email: "three@example.com",
+      phone: "+91 9700000003",
+      attendancePercent: 90,
+      totalClasses: 10,
+      presentDays: 9,
+      absentDays: 1,
+      status: "Present",
+      photo: "photo3.jpg",
+    },
+  ];
+
+  it("should update attendance status and recalculate percentage for matching student IDs", () => {
+    const studentsCopy = JSON.parse(JSON.stringify(bulkTestStudents));
+    const result = bulkUpdateAttendanceStatus(studentsCopy, ["bulk-1", "bulk-2"], "Present", "10:00 AM");
+
+    assert.equal(result.updatedCount, 2);
+    assert.equal(result.invalidStatus, false);
+    assert.equal(result.updatedStudents.length, 2);
+
+    const s1 = studentsCopy.find((s: Student) => s.id === "bulk-1");
+    assert.equal(s1.status, "Present");
+    assert.equal(s1.lastMarkedTime, "10:00 AM");
+    assert.equal(s1.totalClasses, 11);
+    assert.equal(s1.presentDays, 8);
+    assert.equal(s1.attendancePercent, 73); // 8/11 = 72.7 -> 73%
+
+    const s3 = studentsCopy.find((s: Student) => s.id === "bulk-3");
+    assert.equal(s3.status, "Present");
+    assert.equal(s3.totalClasses, 10); // Untouched
+  });
+
+  it("should reject invalid status parameter gracefully", () => {
+    const studentsCopy = JSON.parse(JSON.stringify(bulkTestStudents));
+    const result = bulkUpdateAttendanceStatus(studentsCopy, ["bulk-1"], "UnknownStatus" as any);
+
+    assert.equal(result.updatedCount, 0);
+    assert.equal(result.invalidStatus, true);
+    assert.equal(result.updatedStudents.length, 0);
+  });
+
+  it("should return empty result safely when studentIds list is empty or invalid", () => {
+    const studentsCopy = JSON.parse(JSON.stringify(bulkTestStudents));
+    const result = bulkUpdateAttendanceStatus(studentsCopy, [], "Present");
+
+    assert.equal(result.updatedCount, 0);
+    assert.equal(result.invalidStatus, false);
+  });
+});
+
 
