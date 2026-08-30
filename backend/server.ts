@@ -914,6 +914,122 @@ export function calculateAttendanceTrends(
   };
 }
 
+export interface DefaulterStudent {
+  id: string;
+  name: string;
+  rollNo: string;
+  className: string;
+  email: string;
+  attendancePercent: number;
+  totalClasses: number;
+  presentDays: number;
+  absentDays: number;
+  classesNeededToTarget: number;
+  riskTier: "critical" | "warning";
+}
+
+export interface ClassDefaulterSummary {
+  classId: string;
+  className: string;
+  defaulterCount: number;
+  criticalCount: number;
+  warningCount: number;
+}
+
+export interface DefaultersReport {
+  targetThresholdPercent: number;
+  criticalThresholdPercent: number;
+  totalStudentsEvaluated: number;
+  totalDefaulters: number;
+  defaulterPercentage: number;
+  criticalCount: number;
+  warningCount: number;
+  defaulters: DefaulterStudent[];
+  classBreakdown: ClassDefaulterSummary[];
+}
+
+export function generateAttendanceDefaultersReport(
+  students: Student[],
+  targetThresholdPercent = 75,
+  criticalThresholdPercent = 60
+): DefaultersReport {
+  const target = isNaN(targetThresholdPercent) || targetThresholdPercent <= 0 ? 75 : targetThresholdPercent;
+  const normalizedTarget = Math.max(1, Math.min(100, target));
+  const criticalRaw = isNaN(criticalThresholdPercent) ? 60 : criticalThresholdPercent;
+  const normalizedCritical = Math.max(0, Math.min(normalizedTarget - 1, criticalRaw));
+
+  const defaulters: DefaulterStudent[] = [];
+  let criticalCount = 0;
+  let warningCount = 0;
+  const classMap = new Map<string, ClassDefaulterSummary>();
+
+  (students || []).forEach((s) => {
+    const percent = s.attendancePercent ?? 0;
+    if (percent < normalizedTarget) {
+      const riskTier: "critical" | "warning" = percent < normalizedCritical ? "critical" : "warning";
+      if (riskTier === "critical") {
+        criticalCount++;
+      } else {
+        warningCount++;
+      }
+
+      const total = s.totalClasses || 0;
+      const present = s.presentDays || 0;
+      const targetRatio = normalizedTarget / 100;
+      const needed = targetRatio * total - present;
+      const classesNeededToTarget = needed > 0 ? Math.ceil(needed / (1 - targetRatio)) : 0;
+
+      defaulters.push({
+        id: s.id,
+        name: s.name,
+        rollNo: s.rollNo,
+        className: s.className || "Unknown Class",
+        email: s.email || "",
+        attendancePercent: percent,
+        totalClasses: total,
+        presentDays: present,
+        absentDays: s.absentDays || 0,
+        classesNeededToTarget,
+        riskTier,
+      });
+
+      const cId = s.classId || "unknown";
+      const existing = classMap.get(cId) || {
+        classId: cId,
+        className: s.className || "Unknown Class",
+        defaulterCount: 0,
+        criticalCount: 0,
+        warningCount: 0,
+      };
+
+      existing.defaulterCount++;
+      if (riskTier === "critical") existing.criticalCount++;
+      else existing.warningCount++;
+      classMap.set(cId, existing);
+    }
+  });
+
+  const totalStudentsEvaluated = (students || []).length;
+  const totalDefaulters = defaulters.length;
+  const defaulterPercentage = totalStudentsEvaluated > 0
+    ? Math.round((totalDefaulters / totalStudentsEvaluated) * 100)
+    : 0;
+
+  return {
+    targetThresholdPercent: normalizedTarget,
+    criticalThresholdPercent: normalizedCritical,
+    totalStudentsEvaluated,
+    totalDefaulters,
+    defaulterPercentage,
+    criticalCount,
+    warningCount,
+    defaulters,
+    classBreakdown: Array.from(classMap.values()),
+  };
+}
+
+
+
 
 
 
@@ -1087,6 +1203,20 @@ app.post("/api/students/bulk-status", (req, res) => {
     updatedStudents,
   });
 });
+
+// Get student attendance defaulters report
+app.get("/api/students/defaulters", (req, res) => {
+  const target = req.query.threshold ? parseInt(req.query.threshold as string, 10) : 75;
+  const critical = req.query.critical ? parseInt(req.query.critical as string, 10) : 60;
+  const report = generateAttendanceDefaultersReport(
+    studentsData,
+    isNaN(target) ? 75 : target,
+    isNaN(critical) ? 60 : critical
+  );
+  res.json(report);
+});
+
+
 
 // Get single student profile
 app.get("/api/students/:id", (req, res) => {
