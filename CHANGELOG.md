@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] - 2026-08-30
+
+### Added
+- Student attendance defaulter analysis utility (`generateAttendanceDefaultersReport`) and API endpoint (`GET /api/students/defaulters`) in `backend/server.ts` evaluating students against minimum required attendance thresholds and computing exact additional classes needed to reach target percentage.
+- Dedicated backend unit test suite (`Student Attendance Defaulter Analysis Suite`) in `backend/server.test.ts` testing defaulter identification, risk tier categorization, target class calculation, and class breakdown aggregation.
+- Frontend attendance defaulter calculation and risk evaluation helpers (`calculateClassesNeededToTarget`, `evaluateDefaulterRiskTier`, `formatDefaulterSummary`) in `frontend/src/utils/defaulterAnalysis.ts`.
+- Dedicated frontend unit test suite (`Frontend Defaulter Analysis Suite`) in `frontend/src/utils/defaulterAnalysis.test.ts` covering consecutive class math, risk tier thresholds, summary text formatting, and edge case safety.
+
 ## [1.7.0] - 2026-08-29
 
 ### Added

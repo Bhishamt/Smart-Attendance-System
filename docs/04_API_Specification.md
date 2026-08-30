@@ -45,6 +45,11 @@ Parse and batch import student records from a CSV string payload.
 **Body:** `{ csvContent: string }`
 **Response:** `{ message, importedCount, invalidCount, invalidRecords: { row: number, errors: string[] }[] }`
 
+### GET /api/students/defaulters
+Evaluate students against minimum attendance threshold (default 75%) and return defaulter list with required classes calculation.
+**Query:** `threshold?`, `critical?`
+**Response:** `DefaultersReport` — includes `targetThresholdPercent`, `totalDefaulters`, `defaulterPercentage`, `criticalCount`, `warningCount`, `defaulters`, and `classBreakdown`
+
 ## Classes
 
 ### GET /api/classes/:id/summary
