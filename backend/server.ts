@@ -975,9 +975,9 @@ export function generateAttendanceDefaultersReport(
 
       const total = s.totalClasses || 0;
       const present = s.presentDays || 0;
-      const targetRatio = normalizedTarget / 100;
-      const needed = targetRatio * total - present;
-      const classesNeededToTarget = needed > 0 ? Math.ceil(needed / (1 - targetRatio)) : 0;
+      const numNeeded = normalizedTarget * total - 100 * present;
+      const denNeeded = 100 - normalizedTarget;
+      const classesNeededToTarget = (numNeeded > 0 && denNeeded > 0) ? Math.ceil(numNeeded / denNeeded) : 0;
 
       defaulters.push({
         id: s.id,
