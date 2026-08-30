@@ -22,6 +22,7 @@ import {
   calculateAttendanceTrends,
   parseCSVAttendanceData,
   bulkUpdateAttendanceStatus,
+  generateAttendanceDefaultersReport,
   Student,
 } from "./server.ts";
 
@@ -1151,5 +1152,94 @@ describe("Bulk Attendance Status Update Suite", () => {
     assert.equal(result.invalidStatus, false);
   });
 });
+
+describe("Student Attendance Defaulter Analysis Suite", () => {
+  const defaulterTestStudents: Student[] = [
+    {
+      id: "def-1",
+      name: "Critical Defaulter",
+      rollNo: "801",
+      classId: "cs-3b",
+      className: "Computer Science - 3B",
+      email: "critical@example.com",
+      phone: "+91 9800000001",
+      attendancePercent: 50,
+      totalClasses: 20,
+      presentDays: 10,
+      absentDays: 10,
+      status: "Absent",
+      photo: "photo1.jpg",
+    },
+    {
+      id: "def-2",
+      name: "Warning Defaulter",
+      rollNo: "802",
+      classId: "cs-3b",
+      className: "Computer Science - 3B",
+      email: "warning@example.com",
+      phone: "+91 9800000002",
+      attendancePercent: 70,
+      totalClasses: 20,
+      presentDays: 14,
+      absentDays: 6,
+      status: "Present",
+      photo: "photo2.jpg",
+    },
+    {
+      id: "def-3",
+      name: "Good Student",
+      rollNo: "803",
+      classId: "ee-3a",
+      className: "Electrical Engineering - 3A",
+      email: "good@example.com",
+      phone: "+91 9800000003",
+      attendancePercent: 90,
+      totalClasses: 20,
+      presentDays: 18,
+      absentDays: 2,
+      status: "Present",
+      photo: "photo3.jpg",
+    },
+  ];
+
+  it("should identify defaulters below target threshold and calculate required additional classes", () => {
+    const report = generateAttendanceDefaultersReport(defaulterTestStudents, 75, 60);
+
+    assert.equal(report.targetThresholdPercent, 75);
+    assert.equal(report.criticalThresholdPercent, 60);
+    assert.equal(report.totalStudentsEvaluated, 3);
+    assert.equal(report.totalDefaulters, 2);
+    assert.equal(report.criticalCount, 1);
+    assert.equal(report.warningCount, 1);
+
+    const critical = report.defaulters.find((d) => d.id === "def-1");
+    assert.ok(critical);
+    assert.equal(critical?.riskTier, "critical");
+    assert.equal(critical?.classesNeededToTarget, 20);
+
+    const warning = report.defaulters.find((d) => d.id === "def-2");
+    assert.ok(warning);
+    assert.equal(warning?.riskTier, "warning");
+    assert.equal(warning?.classesNeededToTarget, 4);
+  });
+
+  it("should aggregate class breakdown accurately for defaulters", () => {
+    const report = generateAttendanceDefaultersReport(defaulterTestStudents, 75, 60);
+    assert.equal(report.classBreakdown.length, 1);
+    assert.equal(report.classBreakdown[0].classId, "cs-3b");
+    assert.equal(report.classBreakdown[0].defaulterCount, 2);
+    assert.equal(report.classBreakdown[0].criticalCount, 1);
+    assert.equal(report.classBreakdown[0].warningCount, 1);
+  });
+
+  it("should handle empty dataset safely without throwing errors", () => {
+    const report = generateAttendanceDefaultersReport([], 75, 60);
+    assert.equal(report.totalStudentsEvaluated, 0);
+    assert.equal(report.totalDefaulters, 0);
+    assert.equal(report.defaulters.length, 0);
+    assert.equal(report.classBreakdown.length, 0);
+  });
+});
+
 
 
