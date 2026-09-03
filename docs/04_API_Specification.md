@@ -117,3 +117,11 @@ Simulate social provider authentication (OAuth interactive demo).
 Backup data to Google Drive.
 **Body:** `{ code: string }`
 **Response:** `{ success, fileId }`
+
+## Anomalies & Risk Analysis
+
+### POST /api/students/anomalies/detect
+Evaluate attendance anomalies across student records.
+**Body:** `{ threshold?: number, classId?: string }`
+**Response:** `{ totalAnalyzed: number, anomaliesFound: number, highRiskCount: number, criticalRiskCount: number, anomalies: StudentAnomaly[] }`
+

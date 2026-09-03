@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.0] - 2026-09-03
+
+### Added
+- Student attendance anomaly detection utility (`detectAttendanceAnomalies`) and API endpoint (`POST /api/students/anomalies/detect`) in `backend/server.ts` evaluating student datasets for critical attendance drops, threshold violations, and missing biometric registration.
+- Dedicated backend unit test suite (`Student Attendance Anomaly Detection Suite`) in `backend/server.test.ts` testing critical/high/medium risk severity mapping, custom percentage thresholds, biometric warnings, and empty dataset safety.
+- Frontend attendance anomaly evaluation helper (`evaluateStudentAnomaly`) and severity badge formatter (`formatAnomalySeverityBadge`) in `frontend/src/utils/anomalyDetection.ts`.
+- Dedicated frontend unit test suite (`Frontend Anomaly Detection Utility Suite`) in `frontend/src/utils/anomalyDetection.test.ts` validating severity classification, message formatting, badge CSS class mapping, and null fallback safety.
+
 ## [1.8.0] - 2026-08-30
 
 ### Added
