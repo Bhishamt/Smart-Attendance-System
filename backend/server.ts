@@ -111,6 +111,84 @@ export function generateStudentsJSON(students: Student[]): string {
   return JSON.stringify(students, null, 2);
 }
 
+export interface StudentAnomaly {
+  studentId: string;
+  studentName: string;
+  rollNo: string;
+  className: string;
+  anomalyType: "CRITICAL_ATTENDANCE" | "LOW_ATTENDANCE" | "UNREGISTERED_BIOMETRIC";
+  severity: "critical" | "high" | "medium";
+  message: string;
+  attendancePercent: number;
+}
+
+export interface AttendanceAnomalyReport {
+  totalAnalyzed: number;
+  anomaliesFound: number;
+  highRiskCount: number;
+  criticalRiskCount: number;
+  anomalies: StudentAnomaly[];
+}
+
+export function detectAttendanceAnomalies(
+  students: Student[],
+  thresholdPercentage = 75
+): AttendanceAnomalyReport {
+  const anomalies: StudentAnomaly[] = [];
+  const validStudents = Array.isArray(students) ? students : [];
+
+  validStudents.forEach((student) => {
+    const attendance = typeof student.attendancePercent === "number" ? student.attendancePercent : 0;
+    if (attendance < 65) {
+      anomalies.push({
+        studentId: student.id,
+        studentName: student.name,
+        rollNo: student.rollNo,
+        className: student.className,
+        anomalyType: "CRITICAL_ATTENDANCE",
+        severity: "critical",
+        message: `Critical attendance of ${attendance}% is below 65% minimum safety threshold.`,
+        attendancePercent: attendance,
+      });
+    } else if (attendance < thresholdPercentage) {
+      anomalies.push({
+        studentId: student.id,
+        studentName: student.name,
+        rollNo: student.rollNo,
+        className: student.className,
+        anomalyType: "LOW_ATTENDANCE",
+        severity: "high",
+        message: `Attendance of ${attendance}% is below required ${thresholdPercentage}% threshold.`,
+        attendancePercent: attendance,
+      });
+    }
+
+    if (!student.biometricRegistered && attendance < 80) {
+      anomalies.push({
+        studentId: student.id,
+        studentName: student.name,
+        rollNo: student.rollNo,
+        className: student.className,
+        anomalyType: "UNREGISTERED_BIOMETRIC",
+        severity: "medium",
+        message: `Student lacks biometric registration while maintaining vulnerable attendance (${attendance}%).`,
+        attendancePercent: attendance,
+      });
+    }
+  });
+
+  const criticalRiskCount = anomalies.filter((a) => a.severity === "critical").length;
+  const highRiskCount = anomalies.filter((a) => a.severity === "high").length;
+
+  return {
+    totalAnalyzed: validStudents.length,
+    anomaliesFound: anomalies.length,
+    highRiskCount,
+    criticalRiskCount,
+    anomalies,
+  };
+}
+
 // In-Memory password store (maps email -> hashed password)
 const passwordStore: Record<string, string> = {
   "woorkcollage@gmail.com": hashPassword("admin123"),
@@ -1957,6 +2035,18 @@ app.post("/api/drive/restore/:fileId", async (req, res) => {
   });
 
   res.json({ success: true, message: "Attendance database restored successfully from Cloud Storage!" });
+});
+
+// Detect Attendance Anomalies Endpoint
+app.post("/api/students/anomalies/detect", (req, res) => {
+  const { threshold, classId } = req.body || {};
+  const minThreshold = typeof threshold === "number" && threshold > 0 && threshold <= 100 ? threshold : 75;
+  const filteredStudents = classId && classId !== "all"
+    ? studentsData.filter((s) => s.classId === classId)
+    : studentsData;
+
+  const report = detectAttendanceAnomalies(filteredStudents, minThreshold);
+  res.json(report);
 });
 
 // ==========================================
