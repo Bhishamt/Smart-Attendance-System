@@ -23,6 +23,7 @@ import {
   parseCSVAttendanceData,
   bulkUpdateAttendanceStatus,
   generateAttendanceDefaultersReport,
+  detectAttendanceAnomalies,
   Student,
 } from "./server.ts";
 
@@ -1238,6 +1239,111 @@ describe("Student Attendance Defaulter Analysis Suite", () => {
     assert.equal(report.totalDefaulters, 0);
     assert.equal(report.defaulters.length, 0);
     assert.equal(report.classBreakdown.length, 0);
+  });
+});
+
+describe("Student Attendance Anomaly Detection Suite", () => {
+  const anomalyTestStudents: Student[] = [
+    {
+      id: "anom-1",
+      name: "Critical Student",
+      rollNo: "901",
+      classId: "cs-3b",
+      className: "Computer Science - 3B",
+      email: "critical901@example.com",
+      phone: "+91 9900000001",
+      attendancePercent: 55,
+      totalClasses: 40,
+      presentDays: 22,
+      absentDays: 18,
+      status: "Absent",
+      photo: "photo1.jpg",
+      biometricRegistered: true,
+    },
+    {
+      id: "anom-2",
+      name: "Warning Student",
+      rollNo: "902",
+      classId: "cs-3b",
+      className: "Computer Science - 3B",
+      email: "warning902@example.com",
+      phone: "+91 9900000002",
+      attendancePercent: 72,
+      totalClasses: 40,
+      presentDays: 28,
+      absentDays: 12,
+      status: "Present",
+      photo: "photo2.jpg",
+      biometricRegistered: true,
+    },
+    {
+      id: "anom-3",
+      name: "Unregistered Student",
+      rollNo: "903",
+      classId: "ee-3a",
+      className: "Electrical Engineering - 3A",
+      email: "unreg903@example.com",
+      phone: "+91 9900000003",
+      attendancePercent: 70,
+      totalClasses: 40,
+      presentDays: 28,
+      absentDays: 12,
+      status: "Absent",
+      photo: "photo3.jpg",
+      biometricRegistered: false,
+    },
+    {
+      id: "anom-4",
+      name: "Exemplary Student",
+      rollNo: "904",
+      classId: "ee-3a",
+      className: "Electrical Engineering - 3A",
+      email: "exemplary904@example.com",
+      phone: "+91 9900000004",
+      attendancePercent: 95,
+      totalClasses: 40,
+      presentDays: 38,
+      absentDays: 2,
+      status: "Present",
+      photo: "photo4.jpg",
+      biometricRegistered: true,
+    },
+  ];
+
+  it("should identify critical and low attendance anomalies accurately", () => {
+    const report = detectAttendanceAnomalies(anomalyTestStudents, 75);
+
+    assert.equal(report.totalAnalyzed, 4);
+    assert.equal(report.criticalRiskCount, 1);
+    assert.equal(report.highRiskCount, 2);
+
+    const critical = report.anomalies.find((a) => a.studentId === "anom-1");
+    assert.ok(critical);
+    assert.equal(critical?.anomalyType, "CRITICAL_ATTENDANCE");
+    assert.equal(critical?.severity, "critical");
+
+    const warning = report.anomalies.find((a) => a.studentId === "anom-2" && a.anomalyType === "LOW_ATTENDANCE");
+    assert.ok(warning);
+    assert.equal(warning?.severity, "high");
+  });
+
+  it("should flag unregistered biometric students with vulnerable attendance", () => {
+    const report = detectAttendanceAnomalies(anomalyTestStudents, 75);
+
+    const unreg = report.anomalies.find((a) => a.studentId === "anom-3" && a.anomalyType === "UNREGISTERED_BIOMETRIC");
+    assert.ok(unreg);
+    assert.equal(unreg?.severity, "medium");
+    assert.ok(unreg?.message.includes("lacks biometric registration"));
+  });
+
+  it("should handle custom threshold settings and empty datasets safely", () => {
+    const customReport = detectAttendanceAnomalies(anomalyTestStudents, 70);
+    assert.equal(customReport.totalAnalyzed, 4);
+
+    const emptyReport = detectAttendanceAnomalies([], 75);
+    assert.equal(emptyReport.totalAnalyzed, 0);
+    assert.equal(emptyReport.anomaliesFound, 0);
+    assert.equal(emptyReport.anomalies.length, 0);
   });
 });
 
