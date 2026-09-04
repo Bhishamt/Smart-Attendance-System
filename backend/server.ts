@@ -189,6 +189,94 @@ export function detectAttendanceAnomalies(
   };
 }
 
+export interface StudentEligibilityPrediction {
+  studentId: string;
+  studentName: string;
+  rollNo: string;
+  className: string;
+  currentPercent: number;
+  maxPossiblePercent: number;
+  minPossiblePercent: number;
+  minClassesToAttend: number;
+  eligibilityStatus: "ELIGIBLE" | "AT_RISK" | "INELIGIBLE";
+  message: string;
+}
+
+export interface AttendanceForecastingReport {
+  totalAnalyzed: number;
+  eligibleCount: number;
+  atRiskCount: number;
+  ineligibleCount: number;
+  remainingClasses: number;
+  targetThreshold: number;
+  predictions: StudentEligibilityPrediction[];
+}
+
+export function predictAttendanceEligibility(
+  students: Student[],
+  remainingClasses = 10,
+  targetThreshold = 75
+): AttendanceForecastingReport {
+  const validStudents = Array.isArray(students) ? students : [];
+  const safeRemaining = Math.max(0, Math.round(remainingClasses));
+  const safeThreshold = Math.min(100, Math.max(1, targetThreshold));
+
+  const predictions: StudentEligibilityPrediction[] = validStudents.map((student) => {
+    const present = typeof student.presentDays === "number" ? Math.max(0, student.presentDays) : 0;
+    const total = typeof student.totalClasses === "number" ? Math.max(0, student.totalClasses) : 0;
+    const currentPercent = total > 0 ? Math.round((present / total) * 100) : 0;
+
+    const futureTotal = total + safeRemaining;
+    const maxPossiblePercent = futureTotal > 0 ? Math.round(((present + safeRemaining) / futureTotal) * 100) : 0;
+    const minPossiblePercent = futureTotal > 0 ? Math.round((present / futureTotal) * 100) : 0;
+
+    const targetPresentNeeded = Math.ceil((safeThreshold * futureTotal) / 100);
+    const rawNeeded = targetPresentNeeded - present;
+    const minClassesToAttend = Math.max(0, Math.min(safeRemaining, rawNeeded));
+
+    let eligibilityStatus: "ELIGIBLE" | "AT_RISK" | "INELIGIBLE";
+    let message: string;
+
+    if (maxPossiblePercent < safeThreshold) {
+      eligibilityStatus = "INELIGIBLE";
+      message = `Student is ineligible for exams. Maximum reachable attendance (${maxPossiblePercent}%) cannot reach target ${safeThreshold}%.`;
+    } else if (currentPercent >= safeThreshold) {
+      eligibilityStatus = "ELIGIBLE";
+      message = `Student is currently eligible with ${currentPercent}% attendance. Must maintain attendance above ${safeThreshold}%.`;
+    } else {
+      eligibilityStatus = "AT_RISK";
+      message = `Student is at risk (${currentPercent}%). Must attend at least ${minClassesToAttend} of next ${safeRemaining} classes to reach target ${safeThreshold}%.`;
+    }
+
+    return {
+      studentId: student.id,
+      studentName: student.name,
+      rollNo: student.rollNo,
+      className: student.className,
+      currentPercent,
+      maxPossiblePercent,
+      minPossiblePercent,
+      minClassesToAttend,
+      eligibilityStatus,
+      message,
+    };
+  });
+
+  const eligibleCount = predictions.filter((p) => p.eligibilityStatus === "ELIGIBLE").length;
+  const atRiskCount = predictions.filter((p) => p.eligibilityStatus === "AT_RISK").length;
+  const ineligibleCount = predictions.filter((p) => p.eligibilityStatus === "INELIGIBLE").length;
+
+  return {
+    totalAnalyzed: validStudents.length,
+    eligibleCount,
+    atRiskCount,
+    ineligibleCount,
+    remainingClasses: safeRemaining,
+    targetThreshold: safeThreshold,
+    predictions,
+  };
+}
+
 // In-Memory password store (maps email -> hashed password)
 const passwordStore: Record<string, string> = {
   "woorkcollage@gmail.com": hashPassword("admin123"),
@@ -2046,6 +2134,19 @@ app.post("/api/students/anomalies/detect", (req, res) => {
     : studentsData;
 
   const report = detectAttendanceAnomalies(filteredStudents, minThreshold);
+  res.json(report);
+});
+
+// Predict Attendance Exam Eligibility Endpoint
+app.post("/api/students/forecasting/predict", (req, res) => {
+  const { remainingClasses, threshold, classId } = req.body || {};
+  const safeRemaining = typeof remainingClasses === "number" && remainingClasses >= 0 ? remainingClasses : 10;
+  const safeThreshold = typeof threshold === "number" && threshold > 0 && threshold <= 100 ? threshold : 75;
+  const filteredStudents = classId && classId !== "all"
+    ? studentsData.filter((s) => s.classId === classId)
+    : studentsData;
+
+  const report = predictAttendanceEligibility(filteredStudents, safeRemaining, safeThreshold);
   res.json(report);
 });
 
