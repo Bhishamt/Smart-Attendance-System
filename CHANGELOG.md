@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-09-04
+
+### Added
+- Student attendance forecasting and exam eligibility predictor utility (`predictAttendanceEligibility`) and API endpoint (`POST /api/students/forecasting/predict`) in `backend/server.ts` projecting max/min reachable attendance percentages and minimum future classes required to reach exam qualification thresholds.
+- Dedicated backend unit test suite (`Student Attendance Forecasting & Exam Eligibility Suite`) in `backend/server.test.ts` testing eligibility status categorization (`ELIGIBLE`, `AT_RISK`, `INELIGIBLE`), class math, custom remaining class parameters, and empty dataset handling.
+- Frontend attendance forecasting helper utilities (`evaluateEligibilityStatus`, `calculateMinRequiredClasses`, `evaluateStudentForecasting`, `formatEligibilityBadge`) in `frontend/src/utils/attendanceForecasting.ts`.
+- Dedicated frontend unit test suite (`Frontend Attendance Forecasting Utility Suite`) in `frontend/src/utils/attendanceForecasting.test.ts` validating eligibility status classification, minimum class math, badge CSS class mapping, and edge case safety.
+
 ## [1.9.0] - 2026-09-03
 
 ### Added
