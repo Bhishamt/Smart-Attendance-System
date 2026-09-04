@@ -24,6 +24,7 @@ import {
   bulkUpdateAttendanceStatus,
   generateAttendanceDefaultersReport,
   detectAttendanceAnomalies,
+  predictAttendanceEligibility,
   Student,
 } from "./server.ts";
 
@@ -1346,6 +1347,103 @@ describe("Student Attendance Anomaly Detection Suite", () => {
     assert.equal(emptyReport.anomalies.length, 0);
   });
 });
+
+describe("Student Attendance Forecasting & Exam Eligibility Suite", () => {
+  const forecastingTestStudents: Student[] = [
+    {
+      id: "fc-1",
+      name: "Daniel Green",
+      rollNo: "901",
+      classId: "cs-3b",
+      className: "Computer Science - 3B",
+      email: "daniel@example.com",
+      phone: "+91 9900000001",
+      attendancePercent: 90,
+      totalClasses: 30,
+      presentDays: 27,
+      absentDays: 3,
+      status: "Present",
+      photo: "photo1.jpg",
+    },
+    {
+      id: "fc-2",
+      name: "Emma Watson",
+      rollNo: "902",
+      classId: "cs-3b",
+      className: "Computer Science - 3B",
+      email: "emma@example.com",
+      phone: "+91 9900000002",
+      attendancePercent: 70,
+      totalClasses: 30,
+      presentDays: 21,
+      absentDays: 9,
+      status: "Present",
+      photo: "photo2.jpg",
+    },
+    {
+      id: "fc-3",
+      name: "Frank Miller",
+      rollNo: "903",
+      classId: "ee-3a",
+      className: "Electrical Engineering - 3A",
+      email: "frank@example.com",
+      phone: "+91 9900000003",
+      attendancePercent: 40,
+      totalClasses: 30,
+      presentDays: 12,
+      absentDays: 18,
+      status: "Absent",
+      photo: "photo3.jpg",
+    },
+  ];
+
+  it("should calculate max/min reachable attendance and categorize eligibility status accurately", () => {
+    const report = predictAttendanceEligibility(forecastingTestStudents, 10, 75);
+
+    assert.equal(report.totalAnalyzed, 3);
+    assert.equal(report.eligibleCount, 1);
+    assert.equal(report.atRiskCount, 1);
+    assert.equal(report.ineligibleCount, 1);
+
+    const eligible = report.predictions.find((p) => p.studentId === "fc-1");
+    assert.ok(eligible);
+    assert.equal(eligible?.eligibilityStatus, "ELIGIBLE");
+    assert.equal(eligible?.minPossiblePercent, 68);
+    assert.equal(eligible?.maxPossiblePercent, 93);
+
+    const atRisk = report.predictions.find((p) => p.studentId === "fc-2");
+    assert.ok(atRisk);
+    assert.equal(atRisk?.eligibilityStatus, "AT_RISK");
+    assert.ok(atRisk?.minClassesToAttend! > 0);
+
+    const ineligible = report.predictions.find((p) => p.studentId === "fc-3");
+    assert.ok(ineligible);
+    assert.equal(ineligible?.eligibilityStatus, "INELIGIBLE");
+    assert.equal(ineligible?.maxPossiblePercent, 55);
+  });
+
+  it("should calculate minimum future classes required to reach threshold", () => {
+    const report = predictAttendanceEligibility(forecastingTestStudents, 10, 75);
+    const atRisk = report.predictions.find((p) => p.studentId === "fc-2");
+
+    assert.equal(atRisk?.minClassesToAttend, 9);
+    assert.ok(atRisk?.message.includes("Must attend at least 9 of next 10 classes"));
+  });
+
+  it("should handle custom remaining classes, custom threshold settings, and empty datasets safely", () => {
+    const customReport = predictAttendanceEligibility(forecastingTestStudents, 20, 80);
+    assert.equal(customReport.remainingClasses, 20);
+    assert.equal(customReport.targetThreshold, 80);
+
+    const emptyReport = predictAttendanceEligibility([], 10, 75);
+    assert.equal(emptyReport.totalAnalyzed, 0);
+    assert.equal(emptyReport.eligibleCount, 0);
+    assert.equal(emptyReport.atRiskCount, 0);
+    assert.equal(emptyReport.ineligibleCount, 0);
+    assert.equal(emptyReport.predictions.length, 0);
+  });
+});
+
 
 
 
