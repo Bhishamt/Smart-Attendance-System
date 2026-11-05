@@ -19,7 +19,7 @@ A full-stack web application for educational institutions to manage student atte
 
 | Feature | Description |
 |---------|-------------|
-| **Attendance Tracking** | Mark Present/Absent/Late with toggle UI, batch ops, date selection |
+| **Attendance Tracking** | Mark Present/Absent/Lat with toggle UI, batch ops, date selection |
 | **Attendance Forecasting** | Exam eligibility predictor & future class requirement calculation |
 | **Student Management** | Add, edit, approve, and view student profiles with attendance stats |
 | **Dashboard & Analytics** | Visual dashboards with charts (area, bar, pie), heatmaps, trends |
