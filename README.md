@@ -1,6 +1,6 @@
 <div align="center">
 
-# Smart Attendance Management System
+# Smart Attendance Management Systems
 
 **A modern, cloud-ready SaaS platform tailored for educational institutions to track, manage, and analyze student attendance seamlessly.**
 
