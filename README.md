@@ -197,3 +197,9 @@ MIT — see [LICENSE](LICENSE)
 <div align="center">
   <b>Built with ❤️ by Bhisham Thakur</b>
 </div>
+
+## Quick Updates
+
+- Improved attendance tracking accuracy
+- Added real-time notifications
+- Enhanced mobile responsiveness
