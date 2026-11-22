@@ -190,3 +190,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - All outdated template remnants
 - Experimental flags and labels
+
+## [Unreleased]
+
+### Added
+- Real-time attendance notifications
+- Mobile responsive improvements
+
+### Fixed
+- Attendance tracking accuracy issues
