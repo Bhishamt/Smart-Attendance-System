@@ -24,3 +24,7 @@
     "noEmit": true
   }
 }
+
+// TypeScript config updates
+"strictNullChecks": true,
+"noUncheckedIndexedAccess": true
